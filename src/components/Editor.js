@@ -4,18 +4,14 @@ export default class Editor {
   constructor({ $target, initialState, onSetState }) {
     this.$target = $target;
     this.state = initialState;
-
-    this.$title = this.$target.querySelector(".title");
-    this.$content = this.$target.querySelector(".content");
-
+    this.$title = this.$target.querySelector("#title");
+    this.$content = this.$target.querySelector("#content");
     this.$target.append(this.$title, this.$content);
-
     this.$target.addEventListener("input", (e) => {
       const { target } = e;
-      const { name } = target;
-      this.setState({ ...this.state, [name]: target.value });
+      const { id } = target;
+      this.setState({ ...this.state, [id]: target.value });
       onSetState(this.state);
-      target.focus();
     });
 
     this.render();
@@ -34,7 +30,6 @@ export default class Editor {
       console.log(error);
       this.state = { title: "", content: "" };
     }
-
     this.render();
   };
 }

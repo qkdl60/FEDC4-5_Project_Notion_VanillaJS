@@ -1,21 +1,23 @@
 import DocumentList from "../components/DocumentList.js";
 import { getDocumentsTree, createDocument, deleteDocument } from "../utils/api.js";
 import { push } from "../utils/router.js";
-// 컴포넌트는 화면 출력에 , page에서 복잡한 로직들 처리
-// 출력을 어떻게 해주어야 되나? initialState를 어떻게 처리
-// trim 공백 처리
+import { ACTIVE } from "../constant/constant.js";
+
 export default class ListPage {
   constructor({ $target }) {
     this.documentList = new DocumentList({
       $target,
       initialState: [],
       onClickButton: (target) => {
-        if (target.tagName === "LI") push(target.dataset.id);
-        createDocumentByButton(target, () => this.render());
-        deleteDocumentByButton(target, () => this.render());
+        if (target.tagName === "SPAN") {
+          const { id } = target.closest("li").dataset;
+          push(id);
+        } else if (target.tagName === "BUTTON") {
+          createDocumentByButton(target, async () => await this.render());
+          deleteDocumentByButton(target, async () => await this.render());
+        }
       },
     });
-
     this.render();
   }
 
@@ -27,18 +29,17 @@ export default class ListPage {
 
 const createDocumentByButton = (button, onSubmit) => {
   const { classList } = button;
-  if ((classList.contains("list__add-button--root") || classList.contains("list__add-button--document")) && !classList.contains("active")) {
+  if ((classList.contains("list__add-button--root") || classList.contains("list__add-button--document")) && !classList.contains(ACTIVE)) {
     const $li = button.closest("li");
     const $form = document.createElement("form");
     const $input = document.createElement("input");
     $form.appendChild($input);
     button.before($form);
-    classList.add("active");
+    classList.add(ACTIVE);
     $input.focus();
-
     $input.addEventListener("blur", () => {
       $form.remove();
-      classList.remove("active");
+      classList.remove(ACTIVE);
     });
 
     $form.addEventListener("submit", async (e) => {

@@ -13,10 +13,9 @@ export default class EditorPage {
       initialState: { title: "", content: "" },
       onSetState: (editorState) => {
         if (location.pathname === "/") return;
-        const [_, api, id] = location.pathname.split("/");
+        const id = location.pathname.split("/")[2];
         const TEMP_SAVE_KEY = `temp-${id}`;
         setItem(TEMP_SAVE_KEY, { ...editorState, tempSavedAt: new Date() });
-
         debounce(async () => {
           await updateDocument(`/${id}`, editorState);
           removeItem(TEMP_SAVE_KEY);
@@ -29,6 +28,7 @@ export default class EditorPage {
   showPage = () => {
     const classList = this.$page.classList;
     if (!classList.contains(ACTIVE)) classList.add(ACTIVE);
+    this.$page.querySelector("#content").focus();
   };
 
   hidePage = () => {
@@ -42,8 +42,7 @@ export default class EditorPage {
       this.hidePage();
       return;
     }
-
-    const [_, api, id] = pathname.split("/");
+    const id = pathname.split("/")[2];
     if (id === undefined) {
       this.editorComponent.setState({ title: "", content: "" });
       return;
@@ -59,7 +58,6 @@ export default class EditorPage {
         return;
       }
     }
-
     this.editorComponent.setState({ title, content });
     this.showPage();
   };

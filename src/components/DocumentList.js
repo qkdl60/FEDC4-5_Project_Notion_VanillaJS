@@ -5,12 +5,10 @@ export default class DocumentList {
     this.state = initialState;
     this.$target = $target;
     this.$page = $target.querySelector(".list");
-
     this.$page.addEventListener("click", (e) => {
       const { target } = e;
       onClickButton(target);
     });
-
     this.render();
   }
 
@@ -36,9 +34,10 @@ export default class DocumentList {
     <ul>
     ${state
       .map(
-        (doc) => `<li data-id=${doc.id}>${
+        (doc) => `<li data-id=${doc.id}>
+        <span class="list__title">${
           doc.title
-        } <button class="list__add-button--document">+</button><button class="list__add-button--delete">-</button>
+        }</span> <button class="list__add-button--document">+</button><button class="list__add-button--delete">-</button>
       ${doc.documents.length > 0 ? this.#convertIntoHTML(doc.documents) : ""}</li>`
       )
       .join(" ")}
