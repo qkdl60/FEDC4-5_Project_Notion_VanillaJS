@@ -7,6 +7,7 @@ const $sidebar = $app.querySelector(".listPage");
 const $editor = $app.querySelector(".editorPage");
 
 const listPage = new ListPage({ $target: $sidebar });
+//titl변경시만 onEdit이 호출되도록, 디바운스도 설정되어야한다.
 const editorPage = new EditorPage({
   $target: $editor,
   onEdit: () => {
@@ -14,4 +15,6 @@ const editorPage = new EditorPage({
   },
 });
 
-initRouter(() => editorPage.setState());
+initRouter(() => {
+  editorPage.setState();
+});

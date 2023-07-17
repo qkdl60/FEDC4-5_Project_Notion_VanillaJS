@@ -7,6 +7,7 @@ export default class Editor {
     this.$title = this.$target.querySelector("#title");
     this.$content = this.$target.querySelector("#content");
     this.$target.append(this.$title, this.$content);
+
     this.$target.addEventListener("input", (e) => {
       const { target } = e;
       const { id } = target;

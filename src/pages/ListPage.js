@@ -2,6 +2,7 @@ import DocumentList from "../components/DocumentList.js";
 import { getDocumentsTree, createDocument, deleteDocument } from "../utils/api.js";
 import { push } from "../utils/router.js";
 import { ACTIVE } from "../constant/constant.js";
+import { validateTitle } from "../utils/validation.js";
 
 export default class ListPage {
   constructor({ $target }) {
@@ -45,7 +46,7 @@ const createDocumentByButton = (button, onSubmit) => {
     $form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const title = $input.value.trim();
-      if (title === "") {
+      if (!validateTitle(title)) {
         alert("title을 입력해주요");
         return;
       }

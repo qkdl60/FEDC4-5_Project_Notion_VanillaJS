@@ -19,3 +19,7 @@ export const getItem = (key, defualtValue) => {
 export const removeItem = (key) => {
   storage.removeItem(key);
 };
+
+export const getKey = (id) => {
+  return `TEMP-${id}`;
+};

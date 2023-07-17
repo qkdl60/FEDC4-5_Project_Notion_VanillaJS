@@ -24,12 +24,12 @@ export default class DocumentList {
   };
 
   render = () => {
-    const stateHTML = this.#convertIntoHTML(this.state);
+    const stateHTML = this._convertIntoHTML(this.state);
     this.$page.innerHTML = `<button class="list__add-button--root">add RootDocument</button>${stateHTML}`;
     this.$target.appendChild(this.$page);
   };
 
-  #convertIntoHTML = (state) => {
+  _convertIntoHTML = (state) => {
     return `
     <ul>
     ${state
@@ -38,7 +38,7 @@ export default class DocumentList {
         <span class="list__title">${
           doc.title
         }</span> <button class="list__add-button--document">+</button><button class="list__add-button--delete">-</button>
-      ${doc.documents.length > 0 ? this.#convertIntoHTML(doc.documents) : ""}</li>`
+      ${doc.documents.length > 0 ? this._convertIntoHTML(doc.documents) : ""}</li>`
       )
       .join(" ")}
     </ul>`;
