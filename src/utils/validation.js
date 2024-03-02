@@ -19,7 +19,7 @@ const checkObject = (obj, checkKeys) => {
 };
 
 export const validateTitle = (titleValue) => {
-  const title = titleValue.tirm();
+  const title = titleValue.trim();
   if (title === "") {
     return false;
   }
