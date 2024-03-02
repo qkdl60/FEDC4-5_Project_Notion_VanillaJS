@@ -5,14 +5,14 @@ export const setItem = (key, value) => {
   storage.setItem(key, stringifiedValue);
 };
 
-export const getItem = (key, defualtValue) => {
+export const getItem = (key, defaultValue) => {
   try {
     const storedValue = storage.getItem(key);
     if (storedValue) return JSON.parse(storedValue);
-    return defualtValue;
+    return defaultValue;
   } catch (error) {
     console.log(error.message);
-    return defualtValue;
+    return defaultValue;
   }
 };
 
