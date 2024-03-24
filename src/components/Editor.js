@@ -1,7 +1,7 @@
-import {validateEditorState} from "../utils/validation.js";
+import { validateEditorState } from "../utils/validation";
 
 export default class Editor {
-  constructor({$target, initialState, onSetState}) {
+  constructor({ $target, initialState, onSetState }) {
     this.$target = $target;
     this.state = initialState;
     this.$title = this.$target.querySelector("#title");
@@ -9,9 +9,9 @@ export default class Editor {
     this.$target.append(this.$title, this.$content);
 
     this.$target.addEventListener("input", (e) => {
-      const {target} = e;
-      const {id} = target;
-      this.setState({...this.state, [id]: target.value});
+      const { target } = e;
+      const { id } = target;
+      this.setState({ ...this.state, [id]: target.value });
       onSetState(this.state);
     });
 
@@ -29,7 +29,7 @@ export default class Editor {
       this.state = nextState;
     } catch (error) {
       console.log(error);
-      this.state = {title: "", content: ""};
+      this.state = { title: "", content: "" };
     }
     this.render();
   };

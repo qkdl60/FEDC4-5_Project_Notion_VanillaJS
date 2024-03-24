@@ -20,6 +20,4 @@ export const removeItem = (key) => {
   storage.removeItem(key);
 };
 
-export const getKey = (id) => {
-  return `TEMP-${id}`;
-};
+export const getKey = (id) => `TEMP-${id}`;
