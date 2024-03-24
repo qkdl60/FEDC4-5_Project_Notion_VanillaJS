@@ -1,35 +1,20 @@
 import DocumentList from "../components/DocumentList.js";
-import { getDocumentsTree, createDocument, deleteDocument } from "../utils/api.js";
-import { push } from "../utils/router.js";
-import { ACTIVE } from "../constant/constant.js";
-import { validateTitle } from "../utils/validation.js";
-
-export default class ListPage {
-  constructor({ $target }) {
-    this.documentList = new DocumentList({
-      $target,
-      initialState: [],
-      onClickButton: (target) => {
-        if (target.tagName === "SPAN") {
-          const { id } = target.closest("li").dataset;
-          push(id);
-        } else if (target.tagName === "BUTTON") {
-          createDocumentByButton(target, async () => await this.render());
-          deleteDocumentByButton(target, async () => await this.render());
-        }
-      },
-    });
-    this.render();
-  }
-
-  render = async () => {
+import {getDocumentsTree, createDocument, deleteDocument} from "../utils/api.js";
+import {push} from "../utils/router.js";
+import {ACTIVE} from "../constant/constant.js";
+import {validateTitle} from "../utils/validation.js";
+import Component from "../components/Component.js";
+export default class ListPage extends Component {
+  async render() {
+    const $list = this.$target.querySelector(".list");
+    const documentList = new DocumentList({$target: $list, initialState: []});
     const documents = await getDocumentsTree();
-    this.documentList.setState(documents);
-  };
+    documentList.setState(documents);
+  }
 }
 
 const createDocumentByButton = (button, onSubmit) => {
-  const { classList } = button;
+  const {classList} = button;
   if ((classList.contains("list__add-button--root") || classList.contains("list__add-button--document")) && !classList.contains(ACTIVE)) {
     const $li = button.closest("li");
     const $form = document.createElement("form");
@@ -59,11 +44,11 @@ const createDocumentByButton = (button, onSubmit) => {
 
 const createAndPush = async (title, parent) => {
   if (parent) {
-    const { id } = parent.dataset;
-    const { id: createdId } = await createDocument(title, id);
+    const {id} = parent.dataset;
+    const {id: createdId} = await createDocument(title, id);
     push(createdId);
   } else {
-    const { id: createdId } = await createDocument(title);
+    const {id: createdId} = await createDocument(title);
     push(createdId);
   }
 };
@@ -71,7 +56,7 @@ const createAndPush = async (title, parent) => {
 const deleteDocumentByButton = async (button, onClick) => {
   if (button.classList.contains("list__add-button--delete")) {
     const $li = button.closest("li");
-    const { id } = $li.dataset;
+    const {id} = $li.dataset;
     if (id) {
       await deleteDocument(`/${id}`);
       push();

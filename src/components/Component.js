@@ -1,7 +1,7 @@
 export default class Component {
   $target;
   state;
-  constructor($target, initialState) {
+  constructor({$target, initialState = ""}) {
     this.$target = $target;
     this.state = initialState;
     this.render();
@@ -9,6 +9,6 @@ export default class Component {
   render() {}
   setState(nextState) {
     this.state = nextState;
-    this.render;
+    this.render();
   }
 }
