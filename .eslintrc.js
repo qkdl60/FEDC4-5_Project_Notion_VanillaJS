@@ -24,7 +24,6 @@ module.exports = {
     sourceType: "module",
   },
   rules: {
-    "prettier/prettier": "error",
     // TODO lint airbnb에서 이런 규칙을 만든 이유 공부하기 , 가능하다면  off 없애기
     "arrow-body-style": "off",
     "prefer-arrow-callback": "off",
@@ -35,5 +34,6 @@ module.exports = {
     "import/prefer-default-export": "off",
     "consistent-return": "off",
     "no-return-await": "off",
+    "prettier/prettier": ["error", { endOfLine: "auto" }],
   },
 };
