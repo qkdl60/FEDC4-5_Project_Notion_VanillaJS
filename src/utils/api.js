@@ -1,8 +1,7 @@
 import { API_END_POINT, X_USERNAME } from "../constant/constant";
-import { hideLoading, showLoading } from "./loadingHandler";
+
 // TODO : api도 좀 더 사용하기 편하게 수정 필요
 const request = async (url, options = {}) => {
-  showLoading();
   try {
     const res = await fetch(`${API_END_POINT}${url}`, {
       ...options,
@@ -12,8 +11,6 @@ const request = async (url, options = {}) => {
     throw new Error("api 통신 중 이상");
   } catch (error) {
     console.log(error.message);
-  } finally {
-    hideLoading();
   }
 };
 

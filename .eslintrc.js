@@ -34,6 +34,14 @@ module.exports = {
     "import/prefer-default-export": "off",
     "consistent-return": "off",
     "no-return-await": "off",
+    "no-underscore-dangle": "off",
     "prettier/prettier": ["error", { endOfLine: "auto" }],
+  },
+  settings: {
+    "import/resolver": {
+      node: {
+        extensions: [".js"],
+      },
+    },
   },
 };
