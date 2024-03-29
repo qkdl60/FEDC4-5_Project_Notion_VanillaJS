@@ -5,6 +5,46 @@ import {
 } from "../utils/api.js";
 import { push } from "../utils/router.js";
 
+function renderDocumentsTree(list, $list) {
+  const copiedList = structuredClone(list);
+  // eslint-disable-next-line prefer-const
+  let queue = [];
+  copiedList.forEach((item) => {
+    const $item = document.createElement("list-item");
+    $item.setAttribute("id", item.id);
+    $item.setAttribute("title", item.title);
+    $item.setAttribute("style", "padding:16px");
+    $list.appendChild($item);
+    if (item.documents.length !== 0) {
+      const childDocuments = item.documents.map((doc) => ({
+        ...doc,
+        parent: item.id,
+      }));
+      queue.push(...childDocuments);
+    }
+
+    while (queue.length !== 0) {
+      const replaced = [];
+      queue.forEach((child) => {
+        const $childItem = document.createElement("list-item");
+        $childItem.setAttribute("id", child.id);
+        $childItem.setAttribute("title", child.title);
+        $childItem.setAttribute("style", "padding:16px");
+        const parent = document.getElementById(`${child.parent}`);
+        parent.appendChild($childItem);
+        if (child.documents.length !== 0) {
+          const docs = child.documents.map((doc) => ({
+            ...doc,
+            parent: child.id,
+          }));
+          replaced.push(...docs);
+        }
+      });
+      queue = replaced;
+    }
+  });
+}
+
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
@@ -68,13 +108,14 @@ export default class ListPage extends HTMLElement {
   template() {
     return `
     <h1>ListPage <button class="button--root-add">+</button></h1>
-    <ul>
-    ${this.list.map((document, index) => `<list-item  id=${document.id} title=${document.title}></list-item>`).join("")}
+    <ul class="document-list">
+   
     </ul>
 `;
   }
 
   render() {
     this.innerHTML = this.template();
+    renderDocumentsTree(this.list, this.querySelector(".document-list"));
   }
 }
