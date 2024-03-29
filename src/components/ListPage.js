@@ -13,7 +13,6 @@ function renderDocumentsTree(list, $list) {
     const $item = document.createElement("list-item");
     $item.setAttribute("id", item.id);
     $item.setAttribute("title", item.title);
-    $item.setAttribute("style", "padding:16px");
     $list.appendChild($item);
     if (item.documents.length !== 0) {
       const childDocuments = item.documents.map((doc) => ({
@@ -29,8 +28,7 @@ function renderDocumentsTree(list, $list) {
         const $childItem = document.createElement("list-item");
         $childItem.setAttribute("id", child.id);
         $childItem.setAttribute("title", child.title);
-        $childItem.setAttribute("style", "padding:16px");
-        const parent = document.getElementById(`${child.parent}`);
+        const parent = document.getElementById(`item${child.parent}`);
         parent.appendChild($childItem);
         if (child.documents.length !== 0) {
           const docs = child.documents.map((doc) => ({
