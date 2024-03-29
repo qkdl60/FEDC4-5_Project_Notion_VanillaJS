@@ -34,6 +34,7 @@ module.exports = {
     "import/prefer-default-export": "off",
     "consistent-return": "off",
     "no-return-await": "off",
+    "import/extensions": "off",
     "no-underscore-dangle": "off",
     "prettier/prettier": ["error", { endOfLine: "auto" }],
   },

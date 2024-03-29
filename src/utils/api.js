@@ -1,6 +1,6 @@
-import { API_END_POINT, X_USERNAME } from "../constant/constant";
+import { API_END_POINT, X_USERNAME } from "../constant/constant.js";
 
-// TODO : api도 좀 더 사용하기 편하게 수정 필요
+// TODO : api도 좀 더 사용하기 편하게 수정 필요, 에러 처리 필요,요청시 다른 요청 막기
 const request = async (url, options = {}) => {
   try {
     const res = await fetch(`${API_END_POINT}${url}`, {
