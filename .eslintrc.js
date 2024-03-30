@@ -36,6 +36,7 @@ module.exports = {
     "no-return-await": "off",
     "import/extensions": "off",
     "no-underscore-dangle": "off",
+    "no-use-before-define": "off",
     "prettier/prettier": ["error", { endOfLine: "auto" }],
   },
   settings: {
