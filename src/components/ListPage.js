@@ -5,46 +5,6 @@ import {
 } from "../utils/api.js";
 import { push } from "../utils/router.js";
 
-function renderDocumentsTree(list, $list) {
-  const copiedList = structuredClone(list);
-  // eslint-disable-next-line prefer-const
-  let queue = [];
-  copiedList.forEach((item) => {
-    const $item = document.createElement("list-item");
-    $item.setAttribute("id", item.id);
-    $item.setAttribute("title", item.title);
-    $item.setAttribute("isLast", item.documents.length === 0);
-    $list.appendChild($item);
-    if (item.documents.length !== 0) {
-      const childDocuments = item.documents.map((doc) => ({
-        ...doc,
-        parent: item.id,
-      }));
-      queue.push(...childDocuments);
-    }
-
-    while (queue.length !== 0) {
-      const replaced = [];
-      queue.forEach((child) => {
-        const $childItem = document.createElement("list-item");
-        $childItem.setAttribute("id", child.id);
-        $childItem.setAttribute("title", child.title);
-        $childItem.setAttribute("isLast", child.documents.length === 0);
-        const parent = document.getElementById(`item${child.parent}`);
-        parent.appendChild($childItem);
-        if (child.documents.length !== 0) {
-          const docs = child.documents.map((doc) => ({
-            ...doc,
-            parent: child.id,
-          }));
-          replaced.push(...docs);
-        }
-      });
-      queue = replaced;
-    }
-  });
-}
-
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
@@ -104,12 +64,10 @@ export default class ListPage extends HTMLElement {
     // TODO 로딩 처리필요, 스켈레톤으로 구현
   }
 
-  // TODO 재귀방식X, 하위 요소 접고 피기, 자식은 summary사용이 가능하지 않을까?
   template() {
     return `
     <h1>ListPage <button class="button--root-add">+</button></h1>
     <ul class="document-list">
-   
     </ul>
 `;
   }
@@ -118,4 +76,44 @@ export default class ListPage extends HTMLElement {
     this.innerHTML = this.template();
     renderDocumentsTree(this.list, this.querySelector(".document-list"));
   }
+}
+
+function renderDocumentsTree(list, $list) {
+  const copiedList = structuredClone(list);
+  // eslint-disable-next-line prefer-const
+  let queue = [];
+  copiedList.forEach((item) => {
+    const $item = document.createElement("list-item");
+    $item.setAttribute("id", item.id);
+    $item.setAttribute("title", item.title);
+    $item.setAttribute("isLast", item.documents.length === 0);
+    $list.appendChild($item);
+    if (item.documents.length !== 0) {
+      const childDocuments = item.documents.map((doc) => ({
+        ...doc,
+        parent: item.id,
+      }));
+      queue.push(...childDocuments);
+    }
+
+    while (queue.length !== 0) {
+      const replaced = [];
+      queue.forEach((child) => {
+        const $childItem = document.createElement("list-item");
+        $childItem.setAttribute("id", child.id);
+        $childItem.setAttribute("title", child.title);
+        $childItem.setAttribute("isLast", child.documents.length === 0);
+        const parent = document.getElementById(`item${child.parent}`);
+        parent.appendChild($childItem);
+        if (child.documents.length !== 0) {
+          const docs = child.documents.map((doc) => ({
+            ...doc,
+            parent: child.id,
+          }));
+          replaced.push(...docs);
+        }
+      });
+      queue = replaced;
+    }
+  });
 }

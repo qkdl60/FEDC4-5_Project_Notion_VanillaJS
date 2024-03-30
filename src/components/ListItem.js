@@ -1,6 +1,4 @@
 export default class ListItem extends HTMLElement {
-  // #dom;
-
   get id() {
     return this.getAttribute("id") || "";
   }
@@ -9,6 +7,7 @@ export default class ListItem extends HTMLElement {
     return this.getAttribute("title") || "";
   }
 
+  // TODO: 속성 타입 필요
   get isLast() {
     return JSON.parse(this.getAttribute("isLast"));
   }
@@ -17,14 +16,14 @@ export default class ListItem extends HTMLElement {
     this.render();
   }
 
-  // TODO 아이템 포인터, 배경 변경, 각 버튼 호버시 설명 넣기
+  // TODO 아이템 포인터, 배경 변경, 각 버튼 호버시 설명 넣기, 스타일 css로 변경
   template(state) {
     return `
     <div style="display:flex; flex-direction:row">
       <details style="padding:0 16px 0 24px; position:relative; width:10px; overflow: visible; white-space:nowrap; " >
         <summary></summary>
         <div id="item${state.id}" style="position:absolute left: 0" >
-        ${state.isLast ? "더 이상 문서가 없습니다." : ""}
+        ${state.isLast ? "<p style='margin: 0;' >더 이상 하위 문서가 없습니다.</p>" : ""}
         </div>
       </details>
       <div  class="list list-item">${state.title} <button class="list  list-item__button--add">+</button> <button class="list list-item__button--delete">-</button></div>
