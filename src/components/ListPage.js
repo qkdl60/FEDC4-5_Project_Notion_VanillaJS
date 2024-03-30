@@ -42,6 +42,10 @@ export default class ListPage extends HTMLElement {
         if (targetClassList.contains("list-item__button--add")) {
           const created = await createDocument("제목없음", targetItemId);
           this.list = await getDocumentsTree();
+          this.querySelector(`#details-${targetItemId}`).setAttribute(
+            "open",
+            true,
+          );
           push(created.id);
           // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
