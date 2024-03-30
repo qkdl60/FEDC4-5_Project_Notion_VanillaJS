@@ -7,3 +7,5 @@ export const ROUTE_CHANGE_EVENT_NAME = "route-change";
 export const ACTIVE = "active";
 
 export const DELAY_TIME = 3000;
+
+export const IS_OPEN_STATE_LIST_KEY = "isOpenList";
