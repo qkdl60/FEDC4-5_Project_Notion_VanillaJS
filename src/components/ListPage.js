@@ -1,14 +1,29 @@
+import { IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
 import {
   getDocumentsTree,
   createDocument,
   deleteDocument,
 } from "../utils/api.js";
 import { push } from "../utils/router.js";
+import { setItem, getItem } from "../utils/storage.js";
 
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
     this.list = [];
+    this.isOpenList = new Set();
+    window.addEventListener("item-toggle", (event) => {
+      const [_, id] = event.detail.target.id.split("-");
+      const isOpen = event.detail.newState;
+      if (isOpen === "open") {
+        this.isOpenList.add(id);
+        setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
+      }
+      if (isOpen === "closed" && this.isOpenList.has(id)) {
+        this.isOpenList.delete(id);
+        setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
+      }
+    });
 
     this.addEventListener("click", async (event) => {
       const targetClassList = event.target.classList;
@@ -27,8 +42,12 @@ export default class ListPage extends HTMLElement {
         if (targetClassList.contains("list-item__button--add")) {
           const created = await createDocument("제목없음", targetItemId);
           this.list = await getDocumentsTree();
+          this.querySelector(`#details-${targetItemId}`).setAttribute(
+            "open",
+            true,
+          );
           push(created.id);
-          // TODO 에러 처리, 열림 상태 유지
+          // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
           await deleteDocument(`/${targetItemId}`);
           this.list = await getDocumentsTree();
@@ -57,10 +76,16 @@ export default class ListPage extends HTMLElement {
     this.render();
   }
 
+  async disconnectedCallback() {
+    setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
+  }
+
   async connectedCallback() {
     this.list = await getDocumentsTree();
+    const savedIsOpenList = getItem(IS_OPEN_STATE_LIST_KEY);
+    if (savedIsOpenList) this.isOpenList = new Set(savedIsOpenList);
     this.render();
-    // TODO 로딩 처리필요, 스켈레톤으로 구현
+    // TODO 로딩 처리필요, 스켈레톤으로 구현,
   }
 
   template() {
@@ -73,11 +98,15 @@ export default class ListPage extends HTMLElement {
 
   render() {
     this.innerHTML = this.template();
-    renderDocumentsTree(this.list, this.querySelector(".document-list"));
+    renderDocumentsTree(
+      this.list,
+      this.querySelector(".document-list"),
+      this.isOpenList,
+    );
   }
 }
 
-function renderDocumentsTree(list, $list) {
+function renderDocumentsTree(list, $list, openList = null) {
   const copiedList = structuredClone(list);
   // eslint-disable-next-line prefer-const
   let queue = [];
@@ -87,6 +116,9 @@ function renderDocumentsTree(list, $list) {
     $item.setAttribute("title", item.title);
     $item.setAttribute("isLast", item.documents.length === 0);
     $list.appendChild($item);
+    if (openList && openList.has(item.id.toString())) {
+      $item.querySelector("details").setAttribute("open", true);
+    }
     if (item.documents.length !== 0) {
       const childDocuments = item.documents.map((doc) => ({
         ...doc,
@@ -104,6 +136,9 @@ function renderDocumentsTree(list, $list) {
         $childItem.setAttribute("isLast", child.documents.length === 0);
         const parent = document.getElementById(`item${child.parent}`);
         parent.appendChild($childItem);
+        if (openList && openList.has(child.id.toString())) {
+          $childItem.querySelector("details").setAttribute("open", true);
+        }
         if (child.documents.length !== 0) {
           const docs = child.documents.map((doc) => ({
             ...doc,

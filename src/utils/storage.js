@@ -1,4 +1,4 @@
-const storage = window.localStorage;
+const storage = window.sessionStorage;
 
 export const setItem = (key, value) => {
   const stringifiedValue = JSON.stringify(value);
