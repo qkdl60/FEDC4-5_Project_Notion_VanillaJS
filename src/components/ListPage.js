@@ -9,6 +9,7 @@ export default class ListPage extends HTMLElement {
   constructor() {
     super();
     this.list = [];
+
     this.addEventListener("click", async (event) => {
       const targetClassList = event.target.classList;
       if (
@@ -24,17 +25,15 @@ export default class ListPage extends HTMLElement {
         const targetItem = event.target.closest("list-item");
         const targetItemId = targetItem.getAttribute("id");
         if (targetClassList.contains("list-item__button--add")) {
-          console.log("칠드런 추가 ", targetItem.getAttribute("id"));
-          // await createDocument("제목없음", targetItemId);
-
-          // 해당 아이템으로 라우팅
-          // 리스트 업데이트
+          const created = await createDocument("제목없음", targetItemId);
+          this.list = await getDocumentsTree();
+          push(created.id);
+          // TODO 에러 처리, 열림 상태 유지
         } else if (targetClassList.contains("list-item__button--delete")) {
           await deleteDocument(`/${targetItemId}`);
           this.list = await getDocumentsTree();
           push();
         } else {
-          console.log("아이템 라우팅", targetItem.getAttribute("id"));
           push(targetItemId);
         }
       }
