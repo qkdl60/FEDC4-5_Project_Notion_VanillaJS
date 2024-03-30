@@ -42,6 +42,13 @@ export default class EditorPage extends HTMLElement {
   }
 
   async connectedCallback() {
+    const { pathname } = window.location;
+    const [, , id] = pathname.split("/");
+    if (id !== undefined) {
+      this.id = id;
+      const { title, content } = await getDocumentContent(`/${this.id}`);
+      this.state = { title, content };
+    }
     this.render();
   }
 
