@@ -55,7 +55,6 @@ export default class ListPage extends HTMLElement {
         }
       }
     });
-    // TODO 편집 내용 반영을 위한 외부 list 외부 주입 방식으로 변경 필요, attribute 길이제한 문제
   }
 
   get list() {

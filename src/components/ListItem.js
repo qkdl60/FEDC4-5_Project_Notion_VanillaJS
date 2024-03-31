@@ -15,7 +15,6 @@ export default class ListItem extends HTMLElement {
     this.setAttribute("title", value);
   }
 
-  // TODO: 속성 타입 필요,
   get isLast() {
     return JSON.parse(this.getAttribute("isLast"));
   }
