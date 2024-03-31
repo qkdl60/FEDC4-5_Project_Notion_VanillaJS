@@ -16,7 +16,9 @@ export const initRouter = (onRoute) => {
   window.addEventListener(ROUTE_CHANGE_EVENT_NAME, (e) => {
     const url = e.detail;
     window.history.pushState(null, null, `${url}`);
-    onRoute(); // editor 아이템 변경해줘야한다.
+    const { pathname } = window.location;
+    const [, , id] = pathname.split("/");
+    onRoute(id); // editor 아이템 변경해줘야한다.
   });
 
   const { pathname } = window.location;

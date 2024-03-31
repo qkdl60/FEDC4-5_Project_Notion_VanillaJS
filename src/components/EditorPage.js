@@ -1,19 +1,11 @@
-import { getDocumentContent, updateDocument } from "../utils/api.js";
+import { updateDocument } from "../utils/api.js";
 import { debounce } from "../utils/debounce.js";
 import { DELAY_TIME } from "../constant/constant.js";
-import { initRouter } from "../utils/router.js";
+
 // TODO 외부에서 title, content 주입 방식으로 변경하기
 export default class EditorPage extends HTMLElement {
   constructor() {
     super();
-    this.id = "";
-    this.state = { title: "초기", content: "초기" };
-
-    initRouter(() => {
-      const { pathname } = window.location;
-      const [, , id] = pathname.split("/");
-      if (id !== undefined) this.id = id;
-    });
 
     this.addEventListener("input", (event) => {
       const $content = this.querySelector(".editor--content");
@@ -29,38 +21,53 @@ export default class EditorPage extends HTMLElement {
     });
   }
 
+  get id() {
+    return this.getAttribute("id") || "";
+  }
+
+  set id(value) {
+    this.setAttribute("id", value);
+  }
+
+  get title() {
+    return this.getAttribute("title") || "";
+  }
+
+  set title(value) {
+    this.setAttribute("title", value);
+  }
+
+  get content() {
+    return this.getAttribute("content") || "";
+  }
+
+  set content(value) {
+    this.setAttribute("content", value);
+  }
+
   static get observedAttributes() {
-    return ["id"];
+    return ["id", "title", "content"];
   }
 
   async attributeChangedCallback(attr, oldValue, newValue) {
-    if (this.id && this.id !== "") {
-      const { title, content } = await getDocumentContent(`/${this.id}`);
-      this.state = { title, content };
-    }
-    this.render();
+    if (oldValue === newValue) return;
+    console.log(attr, oldValue, newValue);
+    this[attr] = newValue;
   }
 
   async connectedCallback() {
-    const { pathname } = window.location;
-    const [, , id] = pathname.split("/");
-    if (id !== undefined) {
-      this.id = id;
-      const { title, content } = await getDocumentContent(`/${this.id}`);
-      this.state = { title, content };
-    }
     this.render();
   }
 
-  template(state) {
+  template() {
     return `
     <h1>EditorPage</h1>
-    <div contentEditable=${this.id !== ""} class="editor--title" >${state.title}</div>
-    <div contentEditable=${this.id !== ""} class="editor--content" > ${state.content}</div>
+    <div contentEditable=${this.id !== "undefined"} class="editor--title" >${this.title}</div>
+    <div contentEditable=${this.id !== "undefined"} class="editor--content" > ${this.content}</div>
     `;
   }
 
   render() {
-    this.innerHTML = this.template(this.state);
+    this.innerHTML = this.template();
   }
 }

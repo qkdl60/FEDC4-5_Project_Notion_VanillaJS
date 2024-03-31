@@ -45,6 +45,8 @@ export default class ListPage extends HTMLElement {
             );
             push(created.id);
           }
+
+          // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
           await deleteDocument(`/${targetItemId}`);
           if (window.dispatchEvent(eventCreateDocumentsTree)) push();
