@@ -3,13 +3,35 @@ export default class ListItem extends HTMLElement {
     return this.getAttribute("id") || "";
   }
 
+  set id(value) {
+    this.setAttribute("id", value);
+  }
+
   get title() {
     return this.getAttribute("title") || "";
   }
 
-  // TODO: 속성 타입 필요
+  set title(value) {
+    this.setAttribute("title", value);
+  }
+
+  // TODO: 속성 타입 필요,
   get isLast() {
     return JSON.parse(this.getAttribute("isLast"));
+  }
+
+  set isLast(value) {
+    this.setAttribute("isLast", value);
+  }
+
+  static get observedAttributes() {
+    return ["title"];
+  }
+
+  async attributeChangedCallback(attr, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    this[attr] = newValue;
+    this.render();
   }
 
   connectedCallback() {

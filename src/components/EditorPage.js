@@ -1,8 +1,9 @@
 import { updateDocument } from "../utils/api.js";
 import { debounce } from "../utils/debounce.js";
 import { DELAY_TIME } from "../constant/constant.js";
-
-// TODO 외부에서 title, content 주입 방식으로 변경하기
+// TODO 이벤트 관리도 필요
+const updateDocumentEvent = (id, title, content) =>
+  new CustomEvent("update_document", { detail: { id, title, content } });
 export default class EditorPage extends HTMLElement {
   constructor() {
     super();
@@ -12,21 +13,18 @@ export default class EditorPage extends HTMLElement {
       const $title = this.querySelector(".editor--title");
       const contentValue = $content.innerText;
       const titleValue = $title.innerText;
-      debounce(() => {
-        updateDocument(`/${this.id}`, {
-          title: titleValue,
-          content: contentValue,
-        });
-      }, DELAY_TIME);
+      window.dispatchEvent(
+        updateDocumentEvent(this.documentId, titleValue, contentValue),
+      );
     });
   }
 
-  get id() {
-    return this.getAttribute("id") || "";
+  get documentId() {
+    return this.getAttribute("document-id") || "";
   }
 
-  set id(value) {
-    this.setAttribute("id", value);
+  set documentId(value) {
+    this.setAttribute("document-id", value);
   }
 
   get title() {
@@ -46,13 +44,13 @@ export default class EditorPage extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["id", "title", "content"];
+    return ["document-id", "title", "content"];
   }
 
   async attributeChangedCallback(attr, oldValue, newValue) {
     if (oldValue === newValue) return;
-    console.log(attr, oldValue, newValue);
     this[attr] = newValue;
+    this.render();
   }
 
   async connectedCallback() {
@@ -62,8 +60,8 @@ export default class EditorPage extends HTMLElement {
   template() {
     return `
     <h1>EditorPage</h1>
-    <div contentEditable=${this.id !== "undefined"} class="editor--title" >${this.title}</div>
-    <div contentEditable=${this.id !== "undefined"} class="editor--content" > ${this.content}</div>
+    <div contentEditable=${this.documentId !== "null"} class="editor--title" >${this.title}</div>
+    <div contentEditable=${this.documentId !== "null"} class="editor--content" > ${this.content}</div>
     `;
   }
 
