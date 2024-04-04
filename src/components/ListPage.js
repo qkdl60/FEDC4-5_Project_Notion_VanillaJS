@@ -4,11 +4,11 @@ import { push } from "../utils/router.js";
 import { setItem, getItem } from "../utils/storage.js";
 
 const eventCreateDocumentsTree = new CustomEvent("createDocumentsTree");
-// TODO 문서열림, 닫기, 생성, 삭제  상태 관리
+
+
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
-
     this.isOpenList = new Set();
 
     this.addEventListener("click", async (event) => {
@@ -44,6 +44,7 @@ export default class ListPage extends HTMLElement {
         const targetItemId = targetItem.id;
         if (targetClassList.contains("list-item__button--add")) {
           const created = await createDocument("제목없음", targetItemId);
+
           targetItem.isOpen = true;
           this.isOpenList.add(targetItemId);
           setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
@@ -53,6 +54,8 @@ export default class ListPage extends HTMLElement {
           console.log(targetItem, targetItemId);
 
           push(created.id);
+
+
 
           // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
@@ -113,6 +116,7 @@ export default class ListPage extends HTMLElement {
 }
 
 function renderDocumentsTree(list, $list, openList = null) {
+
   list.forEach((item) => {
     const $item = document.createElement("list-item");
     $item.setAttribute("id", item.id);

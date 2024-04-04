@@ -52,6 +52,20 @@ export default class ListItem extends HTMLElement {
     this.render();
   }
 
+  set isLast(value) {
+    this.setAttribute("isLast", value);
+  }
+
+  static get observedAttributes() {
+    return ["title"];
+  }
+
+  async attributeChangedCallback(attr, oldValue, newValue) {
+    if (oldValue === newValue) return;
+    this[attr] = newValue;
+    this.render();
+  }
+
   connectedCallback() {
     this.render();
   }
