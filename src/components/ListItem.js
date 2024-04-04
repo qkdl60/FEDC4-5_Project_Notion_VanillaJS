@@ -1,9 +1,7 @@
 import { IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
-import { getItem, setItem } from "../utils/storage.js";
+import { getItem } from "../utils/storage.js";
 
-// TODO tittle변경시 하위 요소들이 삭제된다.상태로 가지고있는 것이아니라 처음 렌더링시 넣어주는 형식이라서 다시 리렌더링되면 없는상태로 렌더링된다 .
-// TODO isLast가 필요하나 children으로 판단하는게,  속성 관리 필요,
-// TODO openList는 전역 관리가 필용할거 같다.
+// TODO openList는 전역 관리가 필용할거 같다
 export default class ListItem extends HTMLElement {
   constructor() {
     super();
@@ -52,15 +50,11 @@ export default class ListItem extends HTMLElement {
     this.render();
   }
 
-  set isLast(value) {
-    this.setAttribute("isLast", value);
-  }
-
   connectedCallback() {
     this.render();
   }
 
-  // TODO 아이템 포인터, 배경 변경, 각 버튼 호버시 설명 넣기, 스타일 css로 변경
+  // TODO 아이템 포인터, 배경 변경, 각 버튼 호버시 설명 넣기, 스타일 css로 변경, details 변경 필요(상태로 컨트롤이 안된다. )
   template(state) {
     return `
     <div style="display:flex; flex-direction:row">
@@ -72,7 +66,8 @@ export default class ListItem extends HTMLElement {
             ? "<p style='margin: 0;' >더 이상 하위 문서가 없습니다.</p>"
             : state.documents
                 .map((doc) => {
-                  return `<list-item id=${doc.id} title=${doc.title} is-open=${this.openList.has(doc.id.toString())}></list-item>`;
+                  const isOpen = this.openList.has(doc.id.toString());
+                  return `<list-item id=${doc.id} title=${doc.title} is-open=${isOpen}></list-item>`;
                 })
                 .join("")
         }
@@ -82,7 +77,6 @@ export default class ListItem extends HTMLElement {
     </div>`;
   }
 
-  // TODO document를 안 넣어주고있다 .
   render() {
     const openList = getItem(IS_OPEN_STATE_LIST_KEY);
     if (openList) {
@@ -101,5 +95,3 @@ export default class ListItem extends HTMLElement {
     });
   }
 }
-
-// TODO 열림 상태 유지 하기

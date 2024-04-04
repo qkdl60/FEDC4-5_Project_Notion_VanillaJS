@@ -9,7 +9,6 @@ export default class ListPage extends HTMLElement {
   constructor() {
     super();
     this.isOpenList = new Set();
-
     this.addEventListener("click", async (event) => {
       const { target } = event;
       if (target.tagName === "SUMMARY") {
@@ -24,8 +23,6 @@ export default class ListPage extends HTMLElement {
           this.isOpenList.delete(id);
           setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
         }
-
-        // TODO detail의 open Attribute의 값이 null이 아니라면 리스트 올리고 null 이면 뺴준다.상태 변경도 children 추가,삭제시 유지를 위해서
         return;
       }
       const targetClassList = target.classList;
@@ -43,13 +40,10 @@ export default class ListPage extends HTMLElement {
         const targetItemId = targetItem.id;
         if (targetClassList.contains("list-item__button--add")) {
           const created = await createDocument("제목없음", targetItemId);
-
           targetItem.isOpen = true;
           this.isOpenList.add(targetItemId);
           setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
-          // TODO target도 열림상태로
           window.dispatchEvent(eventCreateDocumentsTree);
-
           push(created.id);
           // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
@@ -77,7 +71,11 @@ export default class ListPage extends HTMLElement {
   async attributeChangedCallback(attr, oldValue, newValue) {
     if (oldValue === newValue) return;
     this.list = newValue;
-    this.render();
+    renderDocumentsTree(
+      this.list,
+      this.querySelector(".document-list"),
+      this.isOpenList,
+    );
   }
 
   async disconnectedCallback() {
@@ -101,25 +99,18 @@ export default class ListPage extends HTMLElement {
 
   render() {
     this.innerHTML = this.template();
-    renderDocumentsTree(
-      this.list,
-      this.querySelector(".document-list"),
-      this.isOpenList,
-    );
   }
 }
 
 function renderDocumentsTree(list, $list, openList = null) {
+  if (!list || list.length === 0) return;
+
   list.forEach((item) => {
-    const $item = document.createElement("list-item");
-    $item.setAttribute("id", item.id);
-    $item.setAttribute("title", item.title);
-    $item.setAttribute("child-documents", JSON.stringify(item.documents));
-    $list.appendChild($item);
-    if (openList && openList.has(item.id.toString())) {
-      $item.setAttribute("is-open", true);
-    } else {
-      $item.setAttribute("is-open", false);
-    }
+    const $listItem = document.createElement("list-item");
+    $listItem.id = item.id;
+    $listItem.title = item.title;
+    $listItem.childDocuments = JSON.stringify(item.documents);
+    $listItem.isOpen = !!(openList && openList.has(item.id.toString()));
+    $list.appendChild($listItem);
   });
 }
