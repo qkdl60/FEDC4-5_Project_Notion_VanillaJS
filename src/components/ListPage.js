@@ -5,7 +5,6 @@ import { setItem, getItem } from "../utils/storage.js";
 
 const eventCreateDocumentsTree = new CustomEvent("createDocumentsTree");
 
-
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
@@ -52,11 +51,7 @@ export default class ListPage extends HTMLElement {
           window.dispatchEvent(eventCreateDocumentsTree);
           console.log(targetItem.isOpen);
           console.log(targetItem, targetItemId);
-
           push(created.id);
-
-
-
           // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
           await deleteDocument(`/${targetItemId}`);
@@ -116,7 +111,6 @@ export default class ListPage extends HTMLElement {
 }
 
 function renderDocumentsTree(list, $list, openList = null) {
-
   list.forEach((item) => {
     const $item = document.createElement("list-item");
     $item.setAttribute("id", item.id);
