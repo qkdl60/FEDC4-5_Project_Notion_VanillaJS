@@ -4,26 +4,32 @@ import { push } from "../utils/router.js";
 import { setItem, getItem } from "../utils/storage.js";
 
 const eventCreateDocumentsTree = new CustomEvent("createDocumentsTree");
-
+// TODO 문서열림, 닫기, 생성, 삭제  상태 관리
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
+
     this.isOpenList = new Set();
-    window.addEventListener("item-toggle", (event) => {
-      const [_, id] = event.detail.target.id.split("-");
-      const isOpen = event.detail.newState;
-      if (isOpen === "open") {
-        this.isOpenList.add(id);
-        setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
-      }
-      if (isOpen === "closed" && this.isOpenList.has(id)) {
-        this.isOpenList.delete(id);
-        setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
-      }
-    });
 
     this.addEventListener("click", async (event) => {
-      const targetClassList = event.target.classList;
+      const { target } = event;
+      if (target.tagName === "SUMMARY") {
+        const $details = target.closest("details");
+        const $listItem = target.closest("list-item");
+        $listItem.isOpen = $details.getAttribute("open") === null;
+        const { id } = $listItem;
+        if ($listItem.isOpen) {
+          this.isOpenList.add(id);
+          setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
+        } else if ($listItem.isOpen === false && this.isOpenList.has(id)) {
+          this.isOpenList.delete(id);
+          setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
+        }
+
+        // TODO detail의 open Attribute의 값이 null이 아니라면 리스트 올리고 null 이면 뺴준다.상태 변경도 children 추가,삭제시 유지를 위해서
+        return;
+      }
+      const targetClassList = target.classList;
       if (
         targetClassList !== undefined &&
         targetClassList.contains("button--root-add")
@@ -34,17 +40,19 @@ export default class ListPage extends HTMLElement {
         targetClassList !== undefined &&
         targetClassList.contains("list")
       ) {
-        const targetItem = event.target.closest("list-item");
-        const targetItemId = targetItem.getAttribute("id");
+        const targetItem = target.closest("list-item");
+        const targetItemId = targetItem.id;
         if (targetClassList.contains("list-item__button--add")) {
           const created = await createDocument("제목없음", targetItemId);
-          if (window.dispatchEvent(eventCreateDocumentsTree)) {
-            this.querySelector(`#details-${targetItemId}`).setAttribute(
-              "open",
-              true,
-            );
-            push(created.id);
-          }
+          targetItem.isOpen = true;
+          this.isOpenList.add(targetItemId);
+          setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
+          // TODO target도 열림상태로
+          window.dispatchEvent(eventCreateDocumentsTree);
+          console.log(targetItem.isOpen);
+          console.log(targetItem, targetItemId);
+
+          push(created.id);
 
           // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
@@ -89,8 +97,8 @@ export default class ListPage extends HTMLElement {
   template() {
     return `
     <h1>ListPage <button class="button--root-add">+</button></h1>
-    <ul class="document-list">
-    </ul>
+    <div class="document-list">
+    </div>
 `;
   }
 
@@ -105,46 +113,16 @@ export default class ListPage extends HTMLElement {
 }
 
 function renderDocumentsTree(list, $list, openList = null) {
-  const copiedList = structuredClone(list);
-  let queue = [];
-  copiedList.forEach((item) => {
+  list.forEach((item) => {
     const $item = document.createElement("list-item");
     $item.setAttribute("id", item.id);
     $item.setAttribute("title", item.title);
-    $item.setAttribute("isLast", item.documents.length === 0);
+    $item.setAttribute("child-documents", JSON.stringify(item.documents));
     $list.appendChild($item);
     if (openList && openList.has(item.id.toString())) {
-      $item.querySelector("details").setAttribute("open", true);
-    }
-    if (item.documents.length !== 0) {
-      const childDocuments = item.documents.map((doc) => ({
-        ...doc,
-        parent: item.id,
-      }));
-      queue.push(...childDocuments);
-    }
-
-    while (queue.length !== 0) {
-      const replaced = [];
-      queue.forEach((child) => {
-        const $childItem = document.createElement("list-item");
-        $childItem.setAttribute("id", child.id);
-        $childItem.setAttribute("title", child.title);
-        $childItem.setAttribute("isLast", child.documents.length === 0);
-        const parent = document.getElementById(`item${child.parent}`);
-        parent.appendChild($childItem);
-        if (openList && openList.has(child.id.toString())) {
-          $childItem.querySelector("details").setAttribute("open", true);
-        }
-        if (child.documents.length !== 0) {
-          const docs = child.documents.map((doc) => ({
-            ...doc,
-            parent: child.id,
-          }));
-          replaced.push(...docs);
-        }
-      });
-      queue = replaced;
+      $item.setAttribute("is-open", true);
+    } else {
+      $item.setAttribute("is-open", false);
     }
   });
 }

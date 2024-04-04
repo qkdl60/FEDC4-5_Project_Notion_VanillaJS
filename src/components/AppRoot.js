@@ -47,6 +47,7 @@ export default class AppRoot extends HTMLElement {
     });
   }
 
+  // editor의title은 list 와 연결 시킨다.
   template() {
     return `
     <h1>app-root</h1>
