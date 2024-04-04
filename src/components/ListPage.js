@@ -49,8 +49,7 @@ export default class ListPage extends HTMLElement {
           setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
           // TODO target도 열림상태로
           window.dispatchEvent(eventCreateDocumentsTree);
-          console.log(targetItem.isOpen);
-          console.log(targetItem, targetItemId);
+
           push(created.id);
           // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
