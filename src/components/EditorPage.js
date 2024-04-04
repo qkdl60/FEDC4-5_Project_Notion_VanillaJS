@@ -1,13 +1,13 @@
-import { updateDocument } from "../utils/api.js";
-import { debounce } from "../utils/debounce.js";
-import { DELAY_TIME } from "../constant/constant.js";
-// TODO 이벤트 관리도 필요
+import { getDocumentContent, updateDocument } from "../utils/api.js";
+
+// TODO 이벤트 관리도 필요, id, title만 속성으로 받고 id따라서 content 호출 하기
 const updateDocumentEvent = (id, title, content) =>
   new CustomEvent("update_document", { detail: { id, title, content } });
+
 export default class EditorPage extends HTMLElement {
   constructor() {
     super();
-
+    this.content = "content 값";
     this.addEventListener("input", (event) => {
       const $content = this.querySelector(".editor--content");
       const $title = this.querySelector(".editor--title");
@@ -35,21 +35,18 @@ export default class EditorPage extends HTMLElement {
     this.setAttribute("title", value);
   }
 
-  get content() {
-    return this.getAttribute("content") || "";
-  }
-
-  set content(value) {
-    this.setAttribute("content", value);
-  }
-
   static get observedAttributes() {
-    return ["document-id", "title", "content"];
+    return ["document-id", "title"];
   }
 
   async attributeChangedCallback(attr, oldValue, newValue) {
     if (oldValue === newValue) return;
     this[attr] = newValue;
+    if (attr === "document-id" && this.documentId !== "null") {
+      const { content } = await getDocumentContent(`/${this.documentId}`);
+      this.content = content;
+      // TODO id바뀐다면 새로 호출하고 컨텐츠 다시 넣기
+    }
     this.render();
   }
 

@@ -1,49 +1,44 @@
-import {
-  getDocumentContent,
-  getDocumentsTree,
-  updateDocument,
-} from "../utils/api.js";
+import { getDocumentsTree, updateDocument } from "../utils/api.js";
 import { initRouter } from "../utils/router.js";
 import { debounce } from "../utils/debounce.js";
-
+import { DELAY_TIME } from "../constant/constant.js";
+// TODO 이벤트 위임으로 모든 이벤트 app root에서 관리?
 export default class AppRoot extends HTMLElement {
   constructor() {
     super();
     this.documentId = null;
     this.documentTitle = "초기";
-    this.documentContent = "초기";
+    this.$listPage = null;
+    this.$editorPage = null;
+    this.list = [];
   }
 
   async connectedCallback() {
-    this.list = await getDocumentsTree();
     this.render();
+    this.list = await getDocumentsTree();
+    this.$editorPage = this.querySelector("editor-page");
+    this.$listPage = this.querySelector("list-page");
+    this.$listPage.list = JSON.stringify(this.list);
     initRouter(async (id) => {
       this.documentId = id;
-      if (id) {
-        const document = await getDocumentContent(`/${id}`);
-        const $editorPage = this.querySelector("editor-page");
-        this.documentTitle = document.title;
-        this.documentContent = document.content;
-        $editorPage.documentId = this.documentId;
-        $editorPage.title = this.documentTitle;
-        $editorPage.content = this.documentContent;
-      }
+      const $listItem = document.getElementById(this.documentId);
+      this.$editorPage.documentId = this.documentId;
+      this.$editorPage.title = $listItem.title;
     });
+
     window.addEventListener("createDocumentsTree", async () => {
       this.list = await getDocumentsTree();
-      const $listPage = this.querySelector("list-page");
       const stringified = JSON.stringify(this.list);
-      $listPage.list = stringified;
+      this.$listPage.list = stringified;
     });
     window.addEventListener("update_document", (e) => {
       const { id, title, content } = e.detail;
-      // TODO 직접 변경은 좋은 방식이 아닌거 같다
+
       const $listItem = document.getElementById(`${id}`);
       if ($listItem) $listItem.title = title;
       debounce(() => {
-        // TODO 리스트 호출을 다시 해야될까?
         updateDocument(`/${id}`, { title, content });
-      }, 3000);
+      }, DELAY_TIME);
     });
   }
 
@@ -51,15 +46,12 @@ export default class AppRoot extends HTMLElement {
   template() {
     return `
     <h1>app-root</h1>
-    <list-page></list-page>
-    <editor-page document-id="${this.documentId}" title="${this.documentTitle}" content="${this.documentContent}" ></editor-page>
+    <list-page list=${JSON.stringify(this.list)}></list-page>
+    <editor-page document-id="${this.documentId}" title="${this.documentTitle}" ></editor-page>
     `;
   }
 
   render() {
     this.innerHTML = this.template();
-    const $listPage = this.querySelector("list-page");
-    const stringified = JSON.stringify(this.list);
-    $listPage.list = stringified;
   }
 }
