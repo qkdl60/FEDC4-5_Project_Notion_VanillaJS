@@ -18,7 +18,7 @@ export const initRouter = (onRoute) => {
     window.history.pushState(null, null, `${url}`);
     const { pathname } = window.location;
     const [, , id] = pathname.split("/");
-    onRoute(id);
+    if (id) onRoute(id);
   });
 
   const { pathname } = window.location;
