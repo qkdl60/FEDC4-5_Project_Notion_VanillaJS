@@ -24,7 +24,6 @@ export default class AppRoot extends HTMLElement {
       this.documentId = id;
       const $listItem = document.getElementById(this.documentId);
       this.$editorPage.documentId = this.documentId;
-      console.log($listItem);
       this.$editorPage.title = $listItem.title;
     });
 
@@ -60,7 +59,6 @@ async function updateDocumentList() {
   const documentsTree = await getDocumentsTree();
   const openList = getItem(IS_OPEN_STATE_LIST_KEY);
   const copiedTree = structuredClone(documentsTree);
-
   return getDocumentList(copiedTree, openList);
 }
 
