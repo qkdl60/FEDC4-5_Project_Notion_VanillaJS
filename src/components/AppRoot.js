@@ -24,6 +24,7 @@ export default class AppRoot extends HTMLElement {
       this.documentId = id;
       const $listItem = document.getElementById(this.documentId);
       this.$editorPage.documentId = this.documentId;
+      console.log($listItem);
       this.$editorPage.title = $listItem.title;
     });
 
