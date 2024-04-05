@@ -59,7 +59,6 @@ async function updateDocumentList() {
   const documentsTree = await getDocumentsTree();
   const openList = getItem(IS_OPEN_STATE_LIST_KEY);
   const copiedTree = structuredClone(documentsTree);
-
   return getDocumentList(copiedTree, openList);
 }
 

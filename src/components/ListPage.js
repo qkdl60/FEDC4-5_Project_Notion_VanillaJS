@@ -4,7 +4,7 @@ import { push } from "../utils/router.js";
 import { setItem } from "../utils/storage.js";
 
 const eventCreateDocumentsTree = new CustomEvent("createDocumentsTree");
-
+// TODO openList 관리 필요
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
@@ -45,7 +45,7 @@ export default class ListPage extends HTMLElement {
           this.isOpenList.add(targetItemId);
           setItem(IS_OPEN_STATE_LIST_KEY, [...this.isOpenList]);
           window.dispatchEvent(eventCreateDocumentsTree);
-          push(created.id);
+
           // TODO 에러 처리,
         } else if (targetClassList.contains("list-item__button--delete")) {
           await deleteDocument(`/${targetItemId}`);
