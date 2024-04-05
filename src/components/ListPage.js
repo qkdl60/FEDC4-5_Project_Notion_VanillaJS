@@ -71,11 +71,7 @@ export default class ListPage extends HTMLElement {
   async attributeChangedCallback(attr, oldValue, newValue) {
     if (oldValue === newValue) return;
     this.list = newValue;
-    renderDocumentsTree(
-      this.list,
-      this.querySelector(".document-list"),
-      this.isOpenList,
-    );
+    this.render();
   }
 
   async disconnectedCallback() {
@@ -83,8 +79,6 @@ export default class ListPage extends HTMLElement {
   }
 
   async connectedCallback() {
-    const savedIsOpenList = getItem(IS_OPEN_STATE_LIST_KEY);
-    if (savedIsOpenList) this.isOpenList = new Set(savedIsOpenList);
     this.render();
     // TODO 로딩 처리필요, 스켈레톤으로 구현,
   }
@@ -93,16 +87,19 @@ export default class ListPage extends HTMLElement {
     return `
     <h1>ListPage <button class="button--root-add">+</button></h1>
     <div class="document-list">
+    
     </div>
 `;
   }
 
   render() {
     this.innerHTML = this.template();
+    const $list = this.querySelector(".document-list");
+    renderDocumentsTree(this.list, $list);
   }
 }
 
-function renderDocumentsTree(list, $list, openList = null) {
+function renderDocumentsTree(list, $list) {
   if (!list || list.length === 0) return;
 
   list.forEach((item) => {
@@ -110,7 +107,7 @@ function renderDocumentsTree(list, $list, openList = null) {
     $listItem.id = item.id;
     $listItem.title = item.title;
     $listItem.childDocuments = JSON.stringify(item.documents);
-    $listItem.isOpen = !!(openList && openList.has(item.id.toString()));
+    $listItem.isOpen = item.isOpen;
     $list.appendChild($listItem);
   });
 }

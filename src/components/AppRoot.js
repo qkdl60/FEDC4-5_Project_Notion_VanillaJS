@@ -1,7 +1,8 @@
 import { getDocumentsTree, updateDocument } from "../utils/api.js";
 import { initRouter } from "../utils/router.js";
 import { debounce } from "../utils/debounce.js";
-import { DELAY_TIME } from "../constant/constant.js";
+import { DELAY_TIME, IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
+import { getItem } from "../utils/storage.js";
 // TODO 이벤트 위임으로 모든 이벤트 app root에서 관리?
 export default class AppRoot extends HTMLElement {
   constructor() {
@@ -15,7 +16,7 @@ export default class AppRoot extends HTMLElement {
 
   async connectedCallback() {
     this.render();
-    this.list = await getDocumentsTree();
+    this.list = await updateDocumentList();
     this.$editorPage = this.querySelector("editor-page");
     this.$listPage = this.querySelector("list-page");
     this.$listPage.list = JSON.stringify(this.list);
@@ -27,9 +28,8 @@ export default class AppRoot extends HTMLElement {
     });
 
     window.addEventListener("createDocumentsTree", async () => {
-      this.list = await getDocumentsTree();
-      const stringified = JSON.stringify(this.list);
-      this.$listPage.list = stringified;
+      this.list = await updateDocumentList();
+      this.$listPage.list = JSON.stringify(this.list);
     });
     window.addEventListener("update_document", (e) => {
       const { id, title, content } = e.detail;
@@ -54,4 +54,20 @@ export default class AppRoot extends HTMLElement {
   render() {
     this.innerHTML = this.template();
   }
+}
+
+async function updateDocumentList() {
+  const documentsTree = await getDocumentsTree();
+  const openList = getItem(IS_OPEN_STATE_LIST_KEY);
+  const copiedTree = structuredClone(documentsTree);
+
+  return getDocumentList(copiedTree, openList);
+}
+
+function getDocumentList(copiedTree, openList = []) {
+  return copiedTree.map((i) => {
+    const isOpen = openList.includes(i.id.toString());
+    const documents = getDocumentList(i.documents, openList);
+    return { ...i, isOpen, documents };
+  });
 }
