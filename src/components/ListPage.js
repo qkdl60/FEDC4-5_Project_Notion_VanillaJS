@@ -1,13 +1,14 @@
 import { IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
 import { createDocument, deleteDocument } from "../utils/api.js";
 import { push } from "../utils/router.js";
-import { setItem, getItem } from "../utils/storage.js";
+import { setItem } from "../utils/storage.js";
 
 const eventCreateDocumentsTree = new CustomEvent("createDocumentsTree");
 
 export default class ListPage extends HTMLElement {
   constructor() {
     super();
+    this.$list = null;
     this.isOpenList = new Set();
     this.addEventListener("click", async (event) => {
       const { target } = event;
@@ -80,6 +81,7 @@ export default class ListPage extends HTMLElement {
 
   async connectedCallback() {
     this.render();
+
     // TODO 로딩 처리필요, 스켈레톤으로 구현,
   }
 
@@ -87,27 +89,25 @@ export default class ListPage extends HTMLElement {
     return `
     <h1>ListPage <button class="button--root-add">+</button></h1>
     <div class="document-list">
-    
     </div>
 `;
   }
 
   render() {
     this.innerHTML = this.template();
-    const $list = this.querySelector(".document-list");
-    renderDocumentsTree(this.list, $list);
+    this.$list = this.querySelector(".document-list");
+    this._renderDocumentsTree();
   }
-}
 
-function renderDocumentsTree(list, $list) {
-  if (!list || list.length === 0) return;
-
-  list.forEach((item) => {
-    const $listItem = document.createElement("list-item");
-    $listItem.id = item.id;
-    $listItem.title = item.title;
-    $listItem.childDocuments = JSON.stringify(item.documents);
-    $listItem.isOpen = item.isOpen;
-    $list.appendChild($listItem);
-  });
+  _renderDocumentsTree() {
+    if (!this.list || this.list.length === 0) return;
+    this.list.forEach((item) => {
+      const $listItem = document.createElement("list-item");
+      $listItem.id = item.id;
+      $listItem.title = item.title;
+      $listItem.childDocuments = JSON.stringify(item.documents);
+      $listItem.isOpen = item.isOpen;
+      this.$list.appendChild($listItem);
+    });
+  }
 }

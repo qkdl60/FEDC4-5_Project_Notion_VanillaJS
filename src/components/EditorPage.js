@@ -1,6 +1,6 @@
-import { getDocumentContent, updateDocument } from "../utils/api.js";
+import { getDocumentContent } from "../utils/api.js";
 
-// TODO 이벤트 관리도 필요, id, title만 속성으로 받고 id따라서 content 호출 하기
+// TODO 이벤트 관리도 필요
 const updateDocumentEvent = (id, title, content) =>
   new CustomEvent("update_document", { detail: { id, title, content } });
 
@@ -45,7 +45,6 @@ export default class EditorPage extends HTMLElement {
     if (attr === "document-id" && this.documentId !== "null") {
       const { content } = await getDocumentContent(`/${this.documentId}`);
       this.content = content;
-      // TODO id바뀐다면 새로 호출하고 컨텐츠 다시 넣기
     }
     this.render();
   }

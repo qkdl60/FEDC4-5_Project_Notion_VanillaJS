@@ -3,7 +3,7 @@ import { initRouter } from "../utils/router.js";
 import { debounce } from "../utils/debounce.js";
 import { DELAY_TIME, IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
 import { getItem } from "../utils/storage.js";
-// TODO 이벤트 위임으로 모든 이벤트 app root에서 관리?
+
 export default class AppRoot extends HTMLElement {
   constructor() {
     super();
@@ -42,7 +42,6 @@ export default class AppRoot extends HTMLElement {
     });
   }
 
-  // TODO editor의title은 list 와 연결 시킨다.
   template() {
     return `
     <h1>app-root</h1>

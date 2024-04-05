@@ -1,7 +1,3 @@
-import { IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
-import { getItem } from "../utils/storage.js";
-
-// TODO openList는 전역 관리가 필용할거 같다
 export default class ListItem extends HTMLElement {
   get id() {
     return this.getAttribute("id") || "";
