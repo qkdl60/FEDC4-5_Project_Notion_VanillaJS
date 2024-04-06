@@ -1,6 +1,6 @@
 import { getDocumentContent } from "../utils/api.js";
 
-// TODO 이벤트 관리도 필요
+// TODO 이벤트 관리도 필요, 브래드크럼을 위한 헤더 필요
 const updateDocumentEvent = (id, title, content) =>
   new CustomEvent("update_document", { detail: { id, title, content } });
 
@@ -53,9 +53,9 @@ export default class EditorPage extends HTMLElement {
     this.render();
   }
 
+  // TODO 브레드크럼 적용
   template() {
     return `
-    <h1>EditorPage</h1>
     <div contentEditable=${this.documentId !== "null"} class="editor--title" >${this.title}</div>
     <div contentEditable=${this.documentId !== "null"} class="editor--content" > ${this.content}</div>
     `;

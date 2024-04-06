@@ -12,6 +12,7 @@ export default class ListPage extends HTMLElement {
     this.isOpenList = new Set();
     this.addEventListener("click", async (event) => {
       const { target } = event;
+
       if (target.tagName === "SUMMARY") {
         const $details = target.closest("details");
         const $listItem = target.closest("list-item");
@@ -26,7 +27,9 @@ export default class ListPage extends HTMLElement {
         }
         return;
       }
+
       const targetClassList = target.classList;
+
       if (
         targetClassList !== undefined &&
         targetClassList.contains("button--root-add")
@@ -87,7 +90,7 @@ export default class ListPage extends HTMLElement {
 
   template() {
     return `
-    <h1>ListPage <button class="button--root-add">+</button></h1>
+    <div class="list-page__header"><span class="list-page__header--text">개인 문서</span> <button class="button--root-add">+</button></div>
     <div class="document-list">
     </div>
 `;

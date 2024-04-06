@@ -44,7 +44,6 @@ export default class AppRoot extends HTMLElement {
 
   template() {
     return `
-    <h1>app-root</h1>
     <list-page list=${JSON.stringify(this.list)}></list-page>
     <editor-page document-id="${this.documentId}" title="${this.documentTitle}" ></editor-page>
     `;
