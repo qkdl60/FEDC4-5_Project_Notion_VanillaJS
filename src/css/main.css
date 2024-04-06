@@ -1,5 +1,5 @@
 /*TODO 다크모드 적용 고려, 선택된 아이템 배경적용*/
-
+/*TODO 폰트 적용 필요 */
 :root {
   --list-color: rgb(119, 117, 110);
   --content-color: black;
@@ -23,6 +23,7 @@ button:hover {
   transform: scale(1.2);
   background-color: var(--background-hover);
   border-radius: 20%;
+  font-weight: bold;
 }
 
 app-root {
@@ -30,9 +31,7 @@ app-root {
   padding: 0;
   margin: 0;
   display: flex;
-  /*TODO 폰트 적용 필요 */
 
-  /*TODO 오버플로우시 list page만 스크롤  */
   list-page {
     box-sizing: border-box;
     color: var(--list-color);
@@ -91,18 +90,22 @@ app-root {
           overflow: hidden;
           width: 100%;
           .list-item__child {
+            margin-top: 8px;
             padding-left: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             .list-item__child--empty-text {
               margin: 0;
               margin-right: 32px;
               overflow: hidden;
               text-overflow: ellipsis;
-              /* TODO 투명도 적용 */
             }
           }
         }
         .list-item__title:hover {
           background-color: var(--background-hover);
+          font-weight: bold;
         }
         .list-item__title {
           display: flex;
@@ -111,8 +114,6 @@ app-root {
           width: calc(100% - 24px);
           left: 24px;
           cursor: pointer;
-          /*TODO 호버시 배경, 볼더 적용, 선택된 아이템 구별 */
-
           .list-item__title--text {
             flex-grow: 1;
             overflow-x: hidden;
