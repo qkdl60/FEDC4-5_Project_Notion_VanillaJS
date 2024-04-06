@@ -52,6 +52,12 @@ app-root {
         margin-left: auto;
       }
     }
+    .document-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
     list-item {
       .list-item__container {
