@@ -53,9 +53,9 @@ export default class EditorPage extends HTMLElement {
     this.render();
   }
 
+  // TODO 브레드크럼 적용
   template() {
     return `
-    <h1>EditorPage</h1>
     <div contentEditable=${this.documentId !== "null"} class="editor--title" >${this.title}</div>
     <div contentEditable=${this.documentId !== "null"} class="editor--content" > ${this.content}</div>
     `;

@@ -60,16 +60,16 @@ export default class ListItem extends HTMLElement {
                   return `<list-item id=${doc.id} title=${doc.title} is-open=${doc.isOpen}></list-item>`;
                 })
                 .join("")
-            : "<p class='list-item__child--empty-text' >더 이상 하위 문서가 없습니다.</p>"
+            : "<p class='list-item__child--empty-text' >하위 문서 없음</p>"
         }
         </div>
       </details>
       <div  class="list list-item list-item__title">
-        <div class="list-item__title--text">
+        <div class="list list-item list-item__title--text">
         ${this.title}
         </div>
         <div class="list-item__title--buttons">
-         <button class="list list-item__button--delete">-</button> <button class="list list-item__button--add">+</button> 
+        <button class="list list-item__button--delete">-</button> <button class="list list-item__button--add">+</button> 
         </div>
       </div>
     </div>`;

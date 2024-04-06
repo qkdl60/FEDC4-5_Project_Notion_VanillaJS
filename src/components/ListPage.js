@@ -12,6 +12,7 @@ export default class ListPage extends HTMLElement {
     this.isOpenList = new Set();
     this.addEventListener("click", async (event) => {
       const { target } = event;
+
       if (target.tagName === "SUMMARY") {
         const $details = target.closest("details");
         const $listItem = target.closest("list-item");
@@ -26,7 +27,9 @@ export default class ListPage extends HTMLElement {
         }
         return;
       }
+
       const targetClassList = target.classList;
+
       if (
         targetClassList !== undefined &&
         targetClassList.contains("button--root-add")
@@ -39,6 +42,7 @@ export default class ListPage extends HTMLElement {
       ) {
         const targetItem = target.closest("list-item");
         const targetItemId = targetItem.id;
+        console.log(targetItem, targetItemId);
         if (targetClassList.contains("list-item__button--add")) {
           const created = await createDocument("제목없음", targetItemId);
           targetItem.isOpen = true;

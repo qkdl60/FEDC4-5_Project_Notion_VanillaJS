@@ -1,4 +1,4 @@
-/*TODO 컬러 변수화 ,*/
+/*TODO 컬러 변수화 , 다크모드 적용 고려*/
 button {
   cursor: pointer;
   border: none;
@@ -13,9 +13,15 @@ button:hover {
 
 app-root {
   display: flex;
+  /*TODO 폰트 적용 필요 */
   editor-page {
     width: 100%;
     flex-grow: 1;
+    padding: 24px;
+    .editor--title {
+      font-size: 32px;
+      font: bolder;
+    }
   }
 
   list-page {
@@ -39,6 +45,9 @@ app-root {
         position: relative;
 
         details {
+          summary {
+            cursor: pointer;
+          }
           display: inline-block;
           margin: 0;
           margin-left: 24px;
@@ -51,16 +60,18 @@ app-root {
               margin-right: 32px;
               overflow: hidden;
               text-overflow: ellipsis;
+              /* TODO 투명도 적용 */
             }
           }
         }
-
         .list-item__title {
           display: flex;
           flex-direction: row;
           position: absolute;
           width: calc(100% - 48px);
           left: 48px;
+          cursor: pointer;
+          /*TODO 호버시 배경, 볼더 적용, 선택된 아이템 구별 */
 
           .list-item__title--text {
             flex-grow: 1;
