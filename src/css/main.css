@@ -1,41 +1,48 @@
-/*TODO 컬러 변수화 , 다크모드 적용 고려*/
-/* 
-필요한 색
-글자 색
-배경색
-  호버 배경색
-  각 페이지 배경색
-*/
+/*TODO 다크모드 적용 고려, 선택된 아이템 배경적용*/
+
+:root {
+  --list-color: rgb(119, 117, 110);
+  --content-color: black;
+  --background-image-page: #f7f7f5;
+  --background-hover: rgba(0, 0, 0, 0.1);
+  --editor-border-line: rgba(119, 117, 110, 0.5);
+}
+body {
+  margin: 0;
+  padding: 0;
+}
 
 button {
   cursor: pointer;
   border: none;
   background-color: transparent;
   border-radius: 20%;
+  color: var(--list-color);
 }
 button:hover {
   transform: scale(1.2);
-  background-color: aqua;
+  background-color: var(--background-hover);
   border-radius: 20%;
 }
 
 app-root {
+  height: 100vh;
+  padding: 0;
+  margin: 0;
   display: flex;
   /*TODO 폰트 적용 필요 */
-  editor-page {
-    width: 100%;
-    flex-grow: 1;
-    padding: 24px;
-    .editor--title {
-      font-size: 32px;
-      font: bolder;
-    }
-  }
+
   /*TODO 오버플로우시 list page만 스크롤  */
   list-page {
+    box-sizing: border-box;
+    color: var(--list-color);
+    padding: 24px;
+    background-color: var(--background-image-page);
     width: 30%;
     min-width: 300px;
     white-space: nowrap;
+    height: 100%;
+    overflow-y: scroll;
     .list-page__header {
       width: 100%;
       display: flex;
@@ -72,14 +79,13 @@ app-root {
             height: 20px;
             cursor: pointer;
           }
-
           display: inline-block;
           margin: 0;
-          margin-left: 24px;
           position: relative;
           overflow: hidden;
           width: 100%;
           .list-item__child {
+            padding-left: 24px;
             .list-item__child--empty-text {
               margin: 0;
               margin-right: 32px;
@@ -89,12 +95,15 @@ app-root {
             }
           }
         }
+        .list-item__title:hover {
+          background-color: var(--background-hover);
+        }
         .list-item__title {
           display: flex;
           flex-direction: row;
           position: absolute;
-          width: calc(100% - 48px);
-          left: 48px;
+          width: calc(100% - 24px);
+          left: 24px;
           cursor: pointer;
           /*TODO 호버시 배경, 볼더 적용, 선택된 아이템 구별 */
 
@@ -109,6 +118,32 @@ app-root {
           }
         }
       }
+    }
+  }
+
+  editor-page {
+    box-sizing: border-box;
+    color: var(--content-color);
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+    padding: 24px;
+    .editor--title {
+      font-size: 32px;
+    }
+
+    .editor--title:focus,
+    .editor--content:focus {
+      outline: none;
+    }
+
+    .editor--title::after {
+      content: "";
+      display: block;
+      height: 1px;
+      width: 100%;
+      background-color: var(--editor-border-line);
+      margin: 16px 0;
     }
   }
 }
