@@ -60,7 +60,7 @@ export default class ListItem extends HTMLElement {
                   return `<list-item id=${doc.id} title=${doc.title} is-open=${doc.isOpen}></list-item>`;
                 })
                 .join("")
-            : "<p style='margin: 0;' >더 이상 하위 문서가 없습니다.</p>"
+            : "<p class='list-item__child--empty-text' >더 이상 하위 문서가 없습니다.</p>"
         }
         </div>
       </details>

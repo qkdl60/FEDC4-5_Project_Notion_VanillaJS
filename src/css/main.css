@@ -37,17 +37,24 @@ app-root {
         display: flex;
         flex-direction: row;
         position: relative;
+
         details {
           display: inline-block;
           margin: 0;
           margin-left: 24px;
           position: relative;
-          overflow: visible;
-          white-space: nowrap;
+          overflow: hidden;
           width: 100%;
           .list-item__child {
+            .list-item__child--empty-text {
+              margin: 0;
+              margin-right: 32px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
           }
         }
+
         .list-item__title {
           display: flex;
           flex-direction: row;
