@@ -1,0 +1,35 @@
+/*TODO 컬러 변수화 ,*/
+button {
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+}
+button:hover {
+  transform: scale(1.2);
+  background-color: aqua;
+  border-radius: 10%;
+}
+
+app-root {
+  display: flex;
+  editor-page {
+    width: 100%;
+    flex-grow: 1;
+  }
+
+  list-page {
+    width: 30%;
+    min-width: 300px;
+    white-space: nowrap;
+    .list_page__header {
+      width: 100%;
+      display: flex;
+
+      .list_page__header--text {
+        flex-grow: 1;
+      }
+      .button--root-add {
+      }
+    }
+  }
+}
