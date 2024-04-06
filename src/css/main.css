@@ -1,4 +1,12 @@
 /*TODO 컬러 변수화 , 다크모드 적용 고려*/
+/* 
+필요한 색
+글자 색
+배경색
+  호버 배경색
+  각 페이지 배경색
+*/
+
 button {
   cursor: pointer;
   border: none;
@@ -23,7 +31,7 @@ app-root {
       font: bolder;
     }
   }
-
+  /*TODO 오버플로우시 list page만 스크롤  */
   list-page {
     width: 30%;
     min-width: 300px;
@@ -44,10 +52,27 @@ app-root {
         flex-direction: row;
         position: relative;
 
+        details > summary::before {
+          content: ">";
+          position: absolute;
+          display: block;
+          transform-origin: center;
+          transition: 0.2s;
+        }
+        details[open] > summary:before {
+          transform: rotate(90deg);
+        }
+        details[open] {
+        }
+
         details {
+          transition: all 0.2s ease;
           summary {
+            display: block;
+            height: 20px;
             cursor: pointer;
           }
+
           display: inline-block;
           margin: 0;
           margin-left: 24px;

@@ -39,6 +39,7 @@ export default class ListItem extends HTMLElement {
   async attributeChangedCallback(attr, oldValue, newValue) {
     if (oldValue === newValue) return;
     this[attr] = newValue;
+    if (attr === "is-open") return;
     this.render();
   }
 

@@ -42,7 +42,6 @@ export default class ListPage extends HTMLElement {
       ) {
         const targetItem = target.closest("list-item");
         const targetItemId = targetItem.id;
-        console.log(targetItem, targetItemId);
         if (targetClassList.contains("list-item__button--add")) {
           const created = await createDocument("제목없음", targetItemId);
           targetItem.isOpen = true;
