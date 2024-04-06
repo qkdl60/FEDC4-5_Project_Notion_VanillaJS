@@ -3,11 +3,12 @@ button {
   cursor: pointer;
   border: none;
   background-color: transparent;
+  border-radius: 20%;
 }
 button:hover {
   transform: scale(1.2);
   background-color: aqua;
-  border-radius: 10%;
+  border-radius: 20%;
 }
 
 app-root {
@@ -21,14 +22,20 @@ app-root {
     width: 30%;
     min-width: 300px;
     white-space: nowrap;
-    .list_page__header {
+    .list-page__header {
       width: 100%;
       display: flex;
-
       .list_page__header--text {
-        flex-grow: 1;
       }
       .button--root-add {
+        margin-left: auto;
+      }
+    }
+
+    list-item {
+      .list-item__container {
+        display: flex;
+        flex-direction: row;
       }
     }
   }

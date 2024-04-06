@@ -87,7 +87,7 @@ export default class ListPage extends HTMLElement {
 
   template() {
     return `
-    <h1>ListPage <button class="button--root-add">+</button></h1>
+    <div class="list-page__header"><span class="list-page__header--text">개인 문서</span> <button class="button--root-add">+</button></div>
     <div class="document-list">
     </div>
 `;
