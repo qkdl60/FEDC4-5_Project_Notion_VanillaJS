@@ -49,10 +49,10 @@ export default class ListItem extends HTMLElement {
   // TODO 아이템 포인터, 배경 변경, 각 버튼 호버시 설명 넣기, 스타일 css로 변경, details 변경 필요(상태로 컨트롤이 안된다. )
   template() {
     return `
-    <div class="list_item__container" style="display:flex; flex-direction:row">
-      <details id="details-${this.id}" style="padding:0 16px 0 24px; position:relative; width:10px; overflow: visible; white-space:nowrap;" ${this.isOpen ? "open" : ""}>
+    <div class="list-item__container" >
+      <details id="details-${this.id}"  ${this.isOpen ? "open" : ""}>
         <summary></summary>
-        <div id="item${this.id}" style="position:absolute left: 0" >
+        <div class="list-item__child" id="item${this.id}" >
         ${
           this.childDocuments.length
             ? this.childDocuments
@@ -64,7 +64,14 @@ export default class ListItem extends HTMLElement {
         }
         </div>
       </details>
-      <div  class="list list-item">${this.title} <button class="list list-item__button--add">+</button> <button class="list list-item__button--delete">-</button></div>
+      <div  class="list list-item list-item__title">
+        <div class="list-item__title--text">
+        ${this.title}
+        </div>
+        <div class="list-item__title--buttons">
+         <button class="list list-item__button--delete">-</button> <button class="list list-item__button--add">+</button> 
+        </div>
+      </div>
     </div>`;
   }
 

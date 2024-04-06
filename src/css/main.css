@@ -36,6 +36,35 @@ app-root {
       .list-item__container {
         display: flex;
         flex-direction: row;
+        position: relative;
+        details {
+          display: inline-block;
+          margin: 0;
+          margin-left: 24px;
+          position: relative;
+          overflow: visible;
+          white-space: nowrap;
+          width: 100%;
+          .list-item__child {
+          }
+        }
+        .list-item__title {
+          display: flex;
+          flex-direction: row;
+          position: absolute;
+          width: calc(100% - 48px);
+          left: 48px;
+
+          .list-item__title--text {
+            flex-grow: 1;
+            overflow-x: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .list-item__title--buttons {
+            margin-left: auto;
+          }
+        }
       }
     }
   }
