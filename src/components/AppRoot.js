@@ -33,7 +33,7 @@ export default class AppRoot extends HTMLElement {
     });
     window.addEventListener("update_document", (e) => {
       const { id, title, content } = e.detail;
-
+      // TODO 전역상태 변경으로 바꾸기
       const $listItem = document.getElementById(`${id}`);
       if ($listItem) $listItem.title = title;
       debounce(() => {
