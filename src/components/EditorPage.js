@@ -56,8 +56,14 @@ export default class EditorPage extends HTMLElement {
   // TODO 브레드크럼 적용
   template() {
     return `
+  <div class='editor-page__header'>
+    브래드크럼,전역 상태가 필요한 부분
+  </div> 
+  <div class="editor-page__body" >
     <div contentEditable=${this.documentId !== "null"} class="editor--title" >${this.title}</div>
     <div contentEditable=${this.documentId !== "null"} class="editor--content" > ${this.content}</div>
+  </div>
+  
     `;
   }
 
