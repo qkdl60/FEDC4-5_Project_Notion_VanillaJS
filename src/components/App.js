@@ -15,7 +15,12 @@ import { debounce } from "../utils/debounce.js";
 
 export default class App extends Component {
   async setUp() {
-    this.state = { documents: [], selected: null, isDarkMode: false };
+    this.state = {
+      documents: [],
+      selected: null,
+      isDarkMode: false,
+      currentPath: null,
+    };
     const openList = getItem(IS_OPEN_STATE_LIST_KEY) || [];
     const documents = await updateDocumentList(openList);
     this.setState({ ...this.state, documents });
@@ -25,7 +30,13 @@ export default class App extends Component {
       const openedList = getItem(IS_OPEN_STATE_LIST_KEY) || [];
       const copiedList = structuredClone(this.state.documents);
       const updatedList = getDocumentList(copiedList, openedList, id);
-      this.setState({ ...this.state, documents: updatedList, selected });
+      const currentPath = getPath(this.state.documents, id);
+      this.setState({
+        ...this.state,
+        documents: updatedList,
+        selected,
+        currentPath,
+      });
     });
   }
 
@@ -35,7 +46,9 @@ export default class App extends Component {
     <div class="list-page">리스트 페이지</div>
     <div class="editor-page">
       <div class='editor-page__header'>
-        <div>브래드 크럼</div>
+        <div class="editor-page__header--breadcrumb"> 
+          ${this.state.currentPath ? this.state.currentPath.map((item) => `<span id="breadcrumb-${item.id}" class="breadcrumb__item">${item.title}</span>`).join("") : ""}
+        </div>
         <label class="theme-toggle" >
           <input class="theme-toggle__button" ${this.state.isDarkMode ? "checked" : ""}  type="checkbox">
           <span>다크모드</span>
@@ -43,7 +56,6 @@ export default class App extends Component {
       </div> 
       <div class="editor-page__body">에디터 페이지</div>
     </div>
-    
     </div>
     
     `;
@@ -66,6 +78,13 @@ export default class App extends Component {
     this.$target.addEventListener("click", async (event) => {
       const { target } = event;
       // TODO 중복 로직 처리하기,
+
+      if (target.classList.contains("breadcrumb__item")) {
+        const targetId = target.id;
+        const [_, id] = targetId.split("-");
+        push(id);
+        return;
+      }
       if (
         target.classList.contains("button--root-add") ||
         target.classList.contains("list-item__button--add")
@@ -101,7 +120,6 @@ export default class App extends Component {
         }
         return;
       }
-      //
       if (target.tagName === "SUMMARY") {
         const $details = target.closest("details");
         const isOpen = !$details.open;
@@ -208,4 +226,26 @@ function searchDocumentById(id, list) {
     que = replace;
   }
   return returnValue.pop();
+}
+
+function findDocument(documentList, id) {
+  return documentList
+    .filter((doc) => {
+      const stringified = JSON.stringify(doc);
+      return stringified.includes(`:${id},`);
+    })
+    .pop();
+}
+
+function getPath(documentList, id) {
+  const returnValue = [];
+  let target = findDocument(documentList, id);
+  while (target) {
+    const currentValue = { id: target.id, title: target.title };
+    returnValue.push(currentValue);
+    if (currentValue.id === id) break;
+    const child = findDocument(target.documents, id);
+    target = child;
+  }
+  return returnValue;
 }

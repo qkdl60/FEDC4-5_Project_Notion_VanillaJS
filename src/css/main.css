@@ -50,8 +50,8 @@ button:hover {
     left: 1rem;
   }
   input[type="checkbox"]:checked {
-    background-color: tomato;
-    border-color: tomato;
+    background-color: transparent;
+    border-color: white;
   }
 }
 
@@ -187,12 +187,32 @@ button:hover {
 
     .editor-page__header {
       width: 100%;
-      border: 1px solid var(--content-color);
       height: 48px;
       box-sizing: border-box;
       position: sticky;
       display: flex;
       align-items: center;
+      padding: 1rem;
+      .editor-page__header--breadcrumb {
+        display: flex;
+        gap: 1rem;
+
+        .breadcrumb__item {
+          cursor: pointer;
+          color: var(--content-color);
+        }
+        .breadcrumb__item::after {
+          content: "/";
+          color: var(--editor-border-line);
+          margin-left: 1rem;
+        }
+        .breadcrumb__item:last-child {
+          pointer-events: none;
+        }
+        .breadcrumb__item:last-child::after {
+          content: "";
+        }
+      }
     }
 
     .editor-page__body {
