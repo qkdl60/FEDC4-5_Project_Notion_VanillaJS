@@ -19,6 +19,7 @@ export default class App extends Component {
     const openList = getItem(IS_OPEN_STATE_LIST_KEY) || [];
     const documents = await updateDocumentList(openList);
     this.setState({ ...this.state, documents });
+
     initRouter(async (id) => {
       const selected = await getDocumentContent(`/${id}`);
       const openedList = getItem(IS_OPEN_STATE_LIST_KEY) || [];

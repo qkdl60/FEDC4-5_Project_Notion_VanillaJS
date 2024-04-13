@@ -6,6 +6,7 @@
   --background-editor-page: white;
   --background-hover: rgba(0, 0, 0, 0.1);
   --editor-border-line: rgba(119, 117, 110, 0.5);
+  --placeholder-color: gray;
 }
 body {
   margin: 0;
@@ -105,8 +106,6 @@ button:hover {
       }
       .list-item__title:hover,
       .list-item__title[selected="true"] {
-        /* TODO 가상선택자 만들어서 다 채우도록 만들기   */
-
         background-color: var(--background-hover);
         font-weight: bold;
       }
@@ -157,6 +156,11 @@ button:hover {
       }
       .editor--content {
         height: 1000px;
+      }
+
+      .editor--content[contentEditable="true"]:empty::before {
+        content: attr(placeholder);
+        color: var(--placeholder-color);
       }
       .editor--title:focus,
       .editor--content:focus {
