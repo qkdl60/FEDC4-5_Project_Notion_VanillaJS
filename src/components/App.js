@@ -32,13 +32,19 @@ export default class App extends Component {
   template() {
     return `
     <div class="list-page">리스트 페이지</div>
-    <div class="editor-page">에디터 페이지</div>
+    <div class="editor-page">
+      <div class='editor-page__header'>
+        브래드크럼, 테마 버튼
+      </div> 
+      <div class="editor-page__body">에디터 페이지</div>
+    </div>
+    
     `;
   }
 
   mounted() {
     const $listPage = this.$target.querySelector(".list-page");
-    const $editorPage = this.$target.querySelector(".editor-page");
+    const $editorPage = this.$target.querySelector(".editor-page__body");
     new ListPage($listPage, {
       items: this.state.documents,
     });
