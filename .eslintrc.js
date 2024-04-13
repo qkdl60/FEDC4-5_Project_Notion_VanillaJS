@@ -38,6 +38,7 @@ module.exports = {
     "no-underscore-dangle": "off",
     "no-use-before-define": "off",
     "no-useless-return": "off",
+    "no-new": "off",
     "prettier/prettier": ["error", { endOfLine: "auto" }],
   },
   settings: {
