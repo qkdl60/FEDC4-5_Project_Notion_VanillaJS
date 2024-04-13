@@ -15,7 +15,7 @@ import { debounce } from "../utils/debounce.js";
 
 export default class App extends Component {
   async setUp() {
-    this.state = { documents: [], selected: null };
+    this.state = { documents: [], selected: null, isDarkMode: false };
     const openList = getItem(IS_OPEN_STATE_LIST_KEY) || [];
     const documents = await updateDocumentList(openList);
     this.setState({ ...this.state, documents });
@@ -31,12 +31,19 @@ export default class App extends Component {
 
   template() {
     return `
+    <div class="theme__provider ${this.state.isDarkMode ? "dark" : ""}">
     <div class="list-page">리스트 페이지</div>
     <div class="editor-page">
       <div class='editor-page__header'>
-        브래드크럼, 테마 버튼
+        <div>브래드 크럼</div>
+        <label class="theme-toggle" >
+          <input class="theme-toggle__button" ${this.state.isDarkMode ? "checked" : ""}  type="checkbox">
+          <span>다크모드</span>
+        </label>
       </div> 
       <div class="editor-page__body">에디터 페이지</div>
+    </div>
+    
     </div>
     
     `;
@@ -115,6 +122,10 @@ export default class App extends Component {
 
     this.$target.addEventListener("input", (event) => {
       const { target } = event;
+      if (target.classList.contains("theme-toggle__button")) {
+        this.setState({ ...this.state, isDarkMode: !this.state.isDarkMode });
+        return;
+      }
       const selection = window.getSelection();
       const { anchorOffset } = selection;
       if (target.classList.contains("editor--title")) {

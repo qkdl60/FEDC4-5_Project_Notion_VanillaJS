@@ -1,5 +1,5 @@
 import Component from "../core/Component.js";
-// TODO 초기값은 플레이스 홀드 스타일, id undefined 처리
+
 export default class EditorPage extends Component {
   template() {
     return `

@@ -1,12 +1,5 @@
 /*TODO 다크모드 적용 고려, 선택된 아이템 배경적용, 폰트 적용 필요*/
 :root {
-  --list-color: rgb(119, 117, 110);
-  --content-color: black;
-  --background-list-page: #f7f7f5;
-  --background-editor-page: white;
-  --background-hover: rgba(0, 0, 0, 0.1);
-  --editor-border-line: rgba(119, 117, 110, 0.5);
-  --placeholder-color: gray;
 }
 body {
   margin: 0;
@@ -27,11 +20,65 @@ button:hover {
   font-weight: bold;
 }
 
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-left: auto;
+  input[type="checkbox"] {
+    appearance: none;
+    position: relative;
+    border: 2px solid gray;
+    border-radius: 1.25rem;
+    width: 2.25rem;
+    height: 1.2rem;
+  }
+  input[type="checkbox"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    transform: scale(0.8);
+    background: gray;
+    transition: left 0.1s linear;
+  }
+  input[type="checkbox"]:checked::before {
+    background-color: white;
+    left: 1rem;
+  }
+  input[type="checkbox"]:checked {
+    background-color: tomato;
+    border-color: tomato;
+  }
+}
+
 #app {
   height: 100vh;
   padding: 0;
   margin: 0;
-  display: flex;
+
+  .theme__provider {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    --list-color: rgb(119, 117, 110);
+    --content-color: black;
+    --background-list-page: #f7f7f5;
+    --background-editor-page: white;
+    --background-hover: rgba(154, 154, 154, 0.3);
+    --editor-border-line: rgba(119, 117, 110, 0.5);
+    --placeholder-color: gray;
+  }
+
+  .theme__provider.dark {
+    --list-color: rgb(99, 99, 99);
+    --content-color: #d3d3d3;
+    --background-list-page: #202020;
+    --background-editor-page: #191919;
+  }
 
   .list-page {
     box-sizing: border-box;
@@ -140,10 +187,12 @@ button:hover {
 
     .editor-page__header {
       width: 100%;
-      border: 1px solid black;
+      border: 1px solid var(--content-color);
       height: 48px;
       box-sizing: border-box;
       position: sticky;
+      display: flex;
+      align-items: center;
     }
 
     .editor-page__body {
