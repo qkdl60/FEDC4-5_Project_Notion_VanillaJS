@@ -247,3 +247,24 @@ button:hover {
     }
   }
 }
+
+.markdown--list-item::before {
+  content: "•";
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+.markdown--header1,
+.markdown--header2,
+.mark-down--header3 {
+  font-weight: bold;
+}
+.markdown--header1 {
+  font-size: 1.5rem;
+}
+.markdown--header2 {
+  font-size: 2rem;
+}
+.markdown--header3 {
+  font-size: 2.5rem;
+}

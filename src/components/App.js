@@ -136,7 +136,34 @@ export default class App extends Component {
         return;
       }
     });
-    //
+
+    this.$target.addEventListener("keydown", (event) => {
+      const { anchorNode } = window.getSelection();
+
+      if (
+        (event.shiftKey && event.key === "Enter") ||
+        (event.key === "Enter" &&
+          (anchorNode.parentNode.classList.contains("markdown--header1") ||
+            anchorNode.parentNode.classList.contains("markdown--header2") ||
+            anchorNode.parentNode.classList.contains("markdown--header3")))
+      ) {
+        event.preventDefault();
+        const cursorParent = anchorNode.parentNode.classList.contains(
+          "editor--content",
+        )
+          ? anchorNode
+          : anchorNode.parentNode;
+        const nextParent = cursorParent.nextSibling;
+        const newDiv = document.createElement("div");
+        const newBr = document.createElement("br");
+        newDiv.appendChild(newBr);
+        event.target.insertBefore(newDiv, nextParent);
+        window.getSelection().setPosition(newDiv, 0);
+
+        // debounce적용해야되나?
+        return;
+      }
+    });
 
     this.$target.addEventListener("input", (event) => {
       const { target } = event;
@@ -171,37 +198,47 @@ export default class App extends Component {
       }
 
       if (target.classList.contains("editor--content")) {
-        if (
-          !selection.anchorNode.parentNode.classList.contains("editor--content")
-        )
-          selection.anchorNode.parentNode.setAttribute("id", "current_cursor");
+        const cursorParent =
+          selection.anchorNode.nodeName === "#text"
+            ? selection.anchorNode.parentNode
+            : selection.anchorNode;
+        if (!cursorParent.classList.contains("editor--content")) {
+          cursorParent.setAttribute("id", "current_cursor");
+        }
+
         const currentInnerHTML = target.innerHTML.replace(
           /(?<=^|<\/div>)([^<]+)(?=<div>|$)/g,
           (matched) => {
             if (!matched) return "";
-            return selection.anchorNode.parentNode.classList.contains(
-              "editor--content",
-            )
+            return cursorParent.classList.contains("editor--content")
               ? `<div id="current_cursor" >${matched}</div>`
               : `<div >${matched}</div>`;
           },
         );
         debounce(() => {
+          const markdownText = replaceMarkdown(currentInnerHTML);
           this.setState({
             ...this.state,
-            selected: { ...this.state.selected, content: currentInnerHTML },
+            selected: { ...this.state.selected, content: markdownText },
           });
           const $currentCursor = document.querySelector("#current_cursor");
-          if ($currentCursor.firstChild)
-            selection.setPosition($currentCursor.firstChild, anchorOffset);
-          if ($currentCursor) $currentCursor.removeAttribute("id");
+          if ($currentCursor) {
+            selection.setPosition(
+              $currentCursor.firstChild,
+              $currentCursor.textContent.length < anchorOffset
+                ? $currentCursor.textContent.length
+                : anchorOffset,
+            );
+          }
           const $editorContent = document.querySelector(".editor--content");
+          $editorContent.childNodes.forEach((node) =>
+            node.removeAttribute("id"),
+          );
           updateDocument(`/${this.state.selected.id}`, {
             title: this.state.selected.title,
             content: $editorContent.innerHTML,
           });
-        }, 500);
-
+        }, 300);
         return;
       }
     });
@@ -270,5 +307,10 @@ function getPath(documentList, id) {
 }
 
 function replaceMarkdown(text) {
-  const a = console.log(text, a);
+  return text
+    .replace(/>-&nbsp;<\//g, ' class="markdown--list-item" >&nbsp;</')
+    .replace(/>\/#{1,3}&nbsp;<\//g, (match) => {
+      const headerNumber = match.split("#").length - 1;
+      return ` class="markdown--header${headerNumber}" > &nbsp;</`;
+    });
 }
