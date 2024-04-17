@@ -169,20 +169,39 @@ export default class App extends Component {
         }, 500);
         return;
       }
+
       if (target.classList.contains("editor--content")) {
+        if (
+          !selection.anchorNode.parentNode.classList.contains("editor--content")
+        )
+          selection.anchorNode.parentNode.setAttribute("id", "current_cursor");
+        const currentInnerHTML = target.innerHTML.replace(
+          /(?<=^|<\/div>)([^<]+)(?=<div>|$)/g,
+          (matched) => {
+            if (!matched) return "";
+            return selection.anchorNode.parentNode.classList.contains(
+              "editor--content",
+            )
+              ? `<div id="current_cursor" >${matched}</div>`
+              : `<div >${matched}</div>`;
+          },
+        );
         debounce(() => {
-          console.log("set");
           this.setState({
             ...this.state,
-            selected: { ...this.state.selected, content: target.innerText },
+            selected: { ...this.state.selected, content: currentInnerHTML },
           });
-          const $contentInput = document.querySelector("#content");
-          selection.setPosition($contentInput.firstChild, anchorOffset);
+          const $currentCursor = document.querySelector("#current_cursor");
+          if ($currentCursor.firstChild)
+            selection.setPosition($currentCursor.firstChild, anchorOffset);
+          if ($currentCursor) $currentCursor.removeAttribute("id");
+          const $editorContent = document.querySelector(".editor--content");
           updateDocument(`/${this.state.selected.id}`, {
             title: this.state.selected.title,
-            content: this.state.selected.content,
+            content: $editorContent.innerHTML,
           });
         }, 500);
+
         return;
       }
     });
@@ -248,4 +267,8 @@ function getPath(documentList, id) {
     target = child;
   }
   return returnValue;
+}
+
+function replaceMarkdown(text) {
+  const a = console.log(text, a);
 }
