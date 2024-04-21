@@ -75,10 +75,17 @@ export default class App extends Component {
   }
 
   setEvent() {
+    this.$target.addEventListener("pointerup", (event) => {
+      const $editorContent = document.querySelector(".editor--content");
+      if (event.target !== $editorContent || $editorContent.hasChildNodes()) {
+        return;
+      }
+      const $newLine = document.createElement("div");
+      $editorContent.appendChild($newLine);
+      window.getSelection().setPosition($newLine);
+    });
     this.$target.addEventListener("click", async (event) => {
       const { target } = event;
-      // TODO 중복 로직 처리하기,
-
       if (target.classList.contains("breadcrumb__item")) {
         const targetId = target.id;
         const [_, id] = targetId.split("-");
@@ -138,35 +145,180 @@ export default class App extends Component {
     });
 
     this.$target.addEventListener("keydown", (event) => {
-      const { anchorNode } = window.getSelection();
+      const selection = window.getSelection();
+      const { anchorNode, anchorOffset } = selection;
 
-      if (
-        (event.shiftKey && event.key === "Enter") ||
-        (event.key === "Enter" &&
-          (anchorNode.parentNode.classList.contains("markdown--header1") ||
-            anchorNode.parentNode.classList.contains("markdown--header2") ||
-            anchorNode.parentNode.classList.contains("markdown--header3")))
-      ) {
+      if (event.ctrlKey && event.key === "s") {
         event.preventDefault();
-        const cursorParent = anchorNode.parentNode.classList.contains(
-          "editor--content",
-        )
-          ? anchorNode
-          : anchorNode.parentNode;
-        const nextParent = cursorParent.nextSibling;
-        const newDiv = document.createElement("div");
-        const newBr = document.createElement("br");
-        newDiv.appendChild(newBr);
-        event.target.insertBefore(newDiv, nextParent);
-        window.getSelection().setPosition(newDiv, 0);
+        if (selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
 
-        // debounce적용해야되나?
+        const nodes = [];
+        const sTagNodes = [];
+        const treeWalker = document.createTreeWalker(
+          document.querySelector(".editor--content"),
+          NodeFilter.SHOW_TEXT,
+        );
+
+        while (treeWalker.nextNode()) {
+          const { currentNode } = treeWalker;
+          if (range.intersectsNode(currentNode)) {
+            if (currentNode.parentNode.nodeName === "S") {
+              sTagNodes.push(currentNode);
+            } else if (currentNode.nodeName === "#text") {
+              nodes.push(currentNode);
+            }
+          }
+        }
+
+        if (nodes.length === 0) {
+          sTagNodes.forEach((node) => {
+            if (node === range.startContainer && node === range.endContainer) {
+              const targetNode = node.splitText(range.startOffset);
+              const postTextNode = targetNode.splitText(range.endOffset);
+              node.parentNode.removeChild(targetNode);
+              node.parentNode.removeChild(postTextNode);
+              const newNode = document.createElement("s");
+              newNode.textContent = postTextNode.textContent;
+              node.parentNode.after(targetNode, newNode);
+              return;
+            }
+            if (node === range.startContainer) {
+              const targetNode = node.splitText(range.startOffset);
+              targetNode.parentNode.removeChild(targetNode);
+              node.parentNode.parentNode.appendChild(targetNode);
+              return;
+            }
+            if (node === range.endContainer) {
+              const restNode = node.splitText(range.endOffset);
+              node.parentNode.parentNode.insertBefore(
+                node,
+                restNode.parentNode,
+              );
+              return;
+            }
+            const newTextNode = document.createTextNode(node.textContent);
+            node.parentNode.parentNode.replaceChild(
+              newTextNode,
+              node.parentNode,
+            );
+          });
+          return;
+        }
+
+        nodes.forEach((node) => {
+          if (node === range.startContainer && node === range.endContainer) {
+            const targetNode = node.splitText(range.startOffset);
+            targetNode.splitText(range.endOffset);
+            const newNode = document.createElement("s");
+            newNode.textContent = range.toString();
+            node.parentNode.replaceChild(newNode, targetNode);
+            return;
+          }
+          if (node === range.startContainer) {
+            const targetNode = node.splitText(range.startOffset);
+            const newNode = document.createElement("s");
+            newNode.textContent = targetNode.textContent;
+            targetNode.parentNode.replaceChild(newNode, targetNode);
+            return;
+          }
+          if (node === range.endContainer) {
+            const restNode = node.splitText(range.endOffset);
+            const newNode = document.createElement("s");
+            newNode.textContent = node.textContent;
+            node.parentNode.replaceChild(newNode, node);
+            return;
+          }
+          const newNode = document.createElement("s");
+          newNode.textContent = node.textContent;
+          node.parentNode.replaceChild(newNode, node);
+        });
+      }
+      //
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const range = selection.getRangeAt(0);
+        let $currentLine = findClosestDiv(range.startContainer);
+        if (!$currentLine) {
+          $currentLine = document.createElement("div");
+          event.target.appendChild($currentLine);
+          selection.setPosition($currentLine, 0);
+        }
+        const postRange = document.createRange();
+        postRange.setStart(range.endContainer, range.endOffset);
+        const $nextLine = $currentLine.nextSibling;
+        const $newLine = document.createElement("div");
+        event.target.insertBefore($newLine, $nextLine);
+        postRange.setEndBefore($newLine);
+        selection.removeAllRanges();
+        selection.addRange(postRange);
+
+        if (postRange.toString().length === 0) {
+          console.log(postRange, toString());
+          const $br = document.createElement("br");
+          $newLine.appendChild($br);
+          selection.setPosition($newLine, 0);
+          if (!$currentLine.hasChildNodes()) {
+            const $currentBr = document.createElement("br");
+            $currentLine.appendChild($currentBr);
+          }
+          return;
+        }
+        const extractedContent = [
+          ...postRange.extractContents().firstChild.childNodes,
+        ];
+        console.log(extractedContent);
+        extractedContent.forEach((node, index, list) => {
+          if (index === 0 && list.length === 1) {
+            const textNode = document.createTextNode(node.textContent);
+            const newNode =
+              textNode.textContent.length === 0
+                ? document.createElement("br")
+                : textNode;
+            $newLine.appendChild(newNode);
+          } else {
+            $newLine.appendChild(node);
+          }
+        });
+        selection.setPosition($newLine, 0);
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        const range = selection.getRangeAt(0);
+        const $currentLine = findClosestDiv(anchorNode);
+        if (!$currentLine) {
+          selection.setPosition(event.target, 0);
+          return;
+        }
+        const preRange = document.createRange();
+        preRange.setStart($currentLine, 0);
+        preRange.setEnd(range.startContainer, range.startOffset);
+        selection.removeAllRanges();
+        selection.addRange(preRange);
+        if (preRange.toString().length !== 0) {
+          selection.setPosition(anchorNode, anchorOffset);
+          return;
+        }
+        event.preventDefault();
+        const $prevLine = $currentLine.previousSibling;
+        if (!$prevLine) return;
+        const cursorSettingContainer = document.createTextNode("");
+        $prevLine.appendChild(cursorSettingContainer);
+        [...$currentLine.childNodes].forEach((node) => {
+          if (node.nodeName === "BR") return;
+          $prevLine.appendChild(node);
+        });
+        selection.setPosition(cursorSettingContainer, 0);
+        $prevLine.removeChild(cursorSettingContainer);
+        event.target.removeChild($currentLine);
         return;
       }
     });
 
     this.$target.addEventListener("input", (event) => {
       const { target } = event;
+
       if (target.classList.contains("theme-toggle__button")) {
         this.setState({ ...this.state, isDarkMode: !this.state.isDarkMode });
         return;
@@ -205,23 +357,14 @@ export default class App extends Component {
         if (!cursorParent.classList.contains("editor--content")) {
           cursorParent.setAttribute("id", "current_cursor");
         }
-
-        const currentInnerHTML = target.innerHTML.replace(
-          /(?<=^|<\/div>)([^<]+)(?=<div>|$)/g,
-          (matched) => {
-            if (!matched) return "";
-            return cursorParent.classList.contains("editor--content")
-              ? `<div id="current_cursor" >${matched}</div>`
-              : `<div >${matched}</div>`;
-          },
-        );
+        const currentInnerHTML = target.innerHTML;
         debounce(() => {
           const markdownText = replaceMarkdown(currentInnerHTML);
           this.setState({
             ...this.state,
             selected: { ...this.state.selected, content: markdownText },
           });
-          const $currentCursor = document.querySelector("#current_cursor");
+          let $currentCursor = document.querySelector("#current_cursor");
           if ($currentCursor) {
             selection.setPosition(
               $currentCursor.firstChild,
@@ -230,10 +373,11 @@ export default class App extends Component {
                 : anchorOffset,
             );
           }
+          while ($currentCursor) {
+            $currentCursor.removeAttribute("id");
+            $currentCursor = document.querySelector("#current_cursor");
+          }
           const $editorContent = document.querySelector(".editor--content");
-          $editorContent.childNodes.forEach((node) =>
-            node.removeAttribute("id"),
-          );
           updateDocument(`/${this.state.selected.id}`, {
             title: this.state.selected.title,
             content: $editorContent.innerHTML,
@@ -309,8 +453,25 @@ function getPath(documentList, id) {
 function replaceMarkdown(text) {
   return text
     .replace(/>-&nbsp;<\//g, ' class="markdown--list-item" >&nbsp;</')
-    .replace(/>\/#{1,3}&nbsp;<\//g, (match) => {
+    .replace(/>\/#{1,4}&nbsp;<\//g, (match) => {
       const headerNumber = match.split("#").length - 1;
       return ` class="markdown--header${headerNumber}" > &nbsp;</`;
     });
+}
+
+function findClosestDiv(node) {
+  let currentNode = node;
+  while (currentNode) {
+    if (currentNode.nodeName === "#text") {
+      currentNode = currentNode.parentNode;
+      continue;
+    }
+    if (currentNode.classList.contains("editor--content")) return null;
+    if (currentNode.nodeName === "DIV") {
+      return currentNode;
+    }
+
+    currentNode = currentNode.parentNode;
+  }
+  return null;
 }

@@ -39,6 +39,7 @@ module.exports = {
     "no-use-before-define": "off",
     "no-useless-return": "off",
     "no-new": "off",
+    "no-continue": "off",
     "prettier/prettier": ["error", { endOfLine: "auto" }],
   },
   settings: {
