@@ -4,8 +4,11 @@ export default class ListPage extends Component {
   template() {
     return `
       <div class="list-page__header">
-        <span class="list-page__header--text"> 개인 문서들 </span> 
-        <button class="button--root-add">+</button>
+        <div class="list-page__header--title">개굴 맹꽁의 NOTION</div>
+        <div class="list-page__header--list-title">
+          <span class="list-page__header--text">페이지</span> 
+          <button class="button--root-add">+</button>
+        </div>
       </div>
       <div class="document-list">
       ${this.props.items.map((item) => itemTemplate(item)).join("")}
