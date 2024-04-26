@@ -7,6 +7,7 @@ body {
 }
 
 button {
+  font-size: 1.5rem;
   cursor: pointer;
   border: none;
   background-color: transparent;
@@ -84,7 +85,7 @@ button:hover {
     box-sizing: border-box;
     color: var(--list-color);
     padding: 24px;
-    padding-right: 0;
+    padding-right: 12px;
     background-color: var(--background-list-page);
     width: 30%;
     min-width: 300px;
@@ -94,6 +95,16 @@ button:hover {
     .list-page__header {
       width: 100%;
       display: flex;
+      flex-direction: column;
+      .list-page__header--title {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        cursor: pointer;
+      }
+      .list-page__header--list-title {
+        font-size: 1.2rem;
+        display: flex;
+      }
       .list_page__header--text {
       }
       .button--root-add {
@@ -111,7 +122,7 @@ button:hover {
       display: flex;
       flex-direction: row;
       position: relative;
-
+      min-height: 30px;
       details > summary::before {
         content: ">";
         position: absolute;
@@ -138,7 +149,7 @@ button:hover {
         overflow: hidden;
         width: 100%;
         .list-item__child {
-          margin-top: 8px;
+          margin-top: 16px;
           padding-left: 24px;
           display: flex;
           flex-direction: column;
@@ -159,6 +170,7 @@ button:hover {
 
       .list-item__title {
         display: flex;
+        align-items: center;
         flex-direction: row;
         position: absolute;
         width: calc(100% - 24px);
@@ -221,10 +233,19 @@ button:hover {
       height: calc(100vh - 48px);
       overflow-y: scroll;
       .editor--title {
+        height: 4rem;
         font-size: 32px;
+        #title {
+          min-height: 100%;
+        }
       }
+
       .editor--content {
-        height: 1000px;
+        margin-top: 1rem;
+        div {
+          min-height: 1rem;
+          padding: 0.25rem;
+        }
       }
 
       .editor--content[contentEditable="true"]:empty::before {
@@ -242,8 +263,30 @@ button:hover {
         height: 1px;
         width: 100%;
         background-color: var(--editor-border-line);
-        margin: 16px 0;
+        margin: 4px 0;
       }
     }
   }
+}
+
+/* placeholder 넣어주기  */
+.markdown--list-item::before {
+  content: "•";
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+.markdown--header1,
+.markdown--header2,
+.mark-down--header3 {
+  font-weight: bold;
+}
+.markdown--header1 {
+  font-size: 2.5rem;
+}
+.markdown--header2 {
+  font-size: 2rem;
+}
+.markdown--header3 {
+  font-size: 1.5rem;
 }

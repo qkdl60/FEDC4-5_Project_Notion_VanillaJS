@@ -17,7 +17,7 @@ export default class App extends Component {
   async setUp() {
     this.state = {
       documents: [],
-      selected: null,
+      selected: initialSelected,
       isDarkMode: false,
       currentPath: null,
     };
@@ -50,9 +50,10 @@ export default class App extends Component {
           ${this.state.currentPath ? this.state.currentPath.map((item) => `<span id="breadcrumb-${item.id}" class="breadcrumb__item">${item.title}</span>`).join("") : ""}
         </div>
         <label class="theme-toggle" >
+          <span>☀️</span>
           <input class="theme-toggle__button" ${this.state.isDarkMode ? "checked" : ""}  type="checkbox">
-          <span>다크모드</span>
-        </label>
+          <span>🌙</span>
+          </label>
       </div> 
       <div class="editor-page__body">에디터 페이지</div>
     </div>
@@ -75,14 +76,30 @@ export default class App extends Component {
   }
 
   setEvent() {
+    this.$target.addEventListener("pointerup", (event) => {
+      const $editorContent = document.querySelector(".editor--content");
+      if (event.target !== $editorContent || $editorContent.hasChildNodes()) {
+        return;
+      }
+      const $newLine = document.createElement("div");
+      $editorContent.appendChild($newLine);
+      window.getSelection().setPosition($newLine);
+    });
     this.$target.addEventListener("click", async (event) => {
       const { target } = event;
-      // TODO 중복 로직 처리하기,
-
       if (target.classList.contains("breadcrumb__item")) {
         const targetId = target.id;
         const [_, id] = targetId.split("-");
         push(id);
+        return;
+      }
+      if (target.classList.contains("list-page__header--title")) {
+        push();
+        this.setState({
+          ...this.state,
+          selected: initialSelected,
+          currentPath: null,
+        });
         return;
       }
       if (
@@ -99,6 +116,7 @@ export default class App extends Component {
         const openList = getItem(IS_OPEN_STATE_LIST_KEY);
         const documents = await updateDocumentList(openList);
         this.setState({ ...this.state, documents });
+
         return;
       }
 
@@ -108,6 +126,16 @@ export default class App extends Component {
         await deleteDocument(`/${itemId}`);
         const openList = getItem(IS_OPEN_STATE_LIST_KEY) || [];
         const documents = await updateDocumentList(openList);
+        if (Number(itemId) === this.state.selected.id) {
+          this.setState({
+            ...this.state,
+            documents,
+            selected: initialSelected,
+            currentPath: null,
+          });
+          push();
+          return;
+        }
         this.setState({ ...this.state, documents });
         return;
       }
@@ -136,10 +164,187 @@ export default class App extends Component {
         return;
       }
     });
-    //
+
+    this.$target.addEventListener("keydown", (event) => {
+      const selection = window.getSelection();
+      const { anchorNode, anchorOffset } = selection;
+
+      if (event.ctrlKey && event.key === "s") {
+        event.preventDefault();
+        if (selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
+
+        const nodes = [];
+        const sTagNodes = [];
+        const treeWalker = document.createTreeWalker(
+          document.querySelector(".editor--content"),
+          NodeFilter.SHOW_TEXT,
+        );
+
+        while (treeWalker.nextNode()) {
+          const { currentNode } = treeWalker;
+          if (range.intersectsNode(currentNode)) {
+            if (currentNode.parentNode.nodeName === "S") {
+              sTagNodes.push(currentNode);
+            } else if (currentNode.nodeName === "#text") {
+              nodes.push(currentNode);
+            }
+          }
+        }
+
+        if (nodes.length === 0) {
+          sTagNodes.forEach((node) => {
+            if (node === range.startContainer && node === range.endContainer) {
+              const targetNode = node.splitText(range.startOffset);
+              const postTextNode = targetNode.splitText(range.endOffset);
+              node.parentNode.removeChild(targetNode);
+              node.parentNode.removeChild(postTextNode);
+              const newNode = document.createElement("s");
+              newNode.textContent = postTextNode.textContent;
+              node.parentNode.after(targetNode, newNode);
+              return;
+            }
+            if (node === range.startContainer) {
+              const targetNode = node.splitText(range.startOffset);
+              targetNode.parentNode.removeChild(targetNode);
+              node.parentNode.parentNode.appendChild(targetNode);
+              return;
+            }
+            if (node === range.endContainer) {
+              const restNode = node.splitText(range.endOffset);
+              node.parentNode.parentNode.insertBefore(
+                node,
+                restNode.parentNode,
+              );
+              return;
+            }
+            const newTextNode = document.createTextNode(node.textContent);
+            node.parentNode.parentNode.replaceChild(
+              newTextNode,
+              node.parentNode,
+            );
+          });
+          return;
+        }
+
+        nodes.forEach((node) => {
+          if (node === range.startContainer && node === range.endContainer) {
+            const targetNode = node.splitText(range.startOffset);
+            targetNode.splitText(range.endOffset);
+            const newNode = document.createElement("s");
+            newNode.textContent = range.toString();
+            node.parentNode.replaceChild(newNode, targetNode);
+            return;
+          }
+          if (node === range.startContainer) {
+            const targetNode = node.splitText(range.startOffset);
+            const newNode = document.createElement("s");
+            newNode.textContent = targetNode.textContent;
+            targetNode.parentNode.replaceChild(newNode, targetNode);
+            return;
+          }
+          if (node === range.endContainer) {
+            const restNode = node.splitText(range.endOffset);
+            const newNode = document.createElement("s");
+            newNode.textContent = node.textContent;
+            node.parentNode.replaceChild(newNode, node);
+            return;
+          }
+          const newNode = document.createElement("s");
+          newNode.textContent = node.textContent;
+          node.parentNode.replaceChild(newNode, node);
+        });
+      }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const range = selection.getRangeAt(0);
+        let $currentLine = findClosestDiv(range.startContainer);
+        const $title = document.querySelector("#title");
+        if (!$currentLine) {
+          $currentLine = document.createElement("div");
+          event.target.appendChild($currentLine);
+          selection.setPosition($currentLine, 0);
+        }
+        if ($currentLine === $title) {
+          return;
+        }
+        const postRange = document.createRange();
+        postRange.setStart(range.endContainer, range.endOffset);
+        const $nextLine = $currentLine.nextSibling;
+        const $newLine = document.createElement("div");
+        event.target.insertBefore($newLine, $nextLine);
+        postRange.setEndBefore($newLine);
+        selection.removeAllRanges();
+        selection.addRange(postRange);
+        if (postRange.toString().length === 0) {
+          const $br = document.createElement("br");
+          $newLine.appendChild($br);
+          selection.setPosition($newLine, 0);
+          if (!$currentLine.hasChildNodes()) {
+            const $currentBr = document.createElement("br");
+            $currentLine.appendChild($currentBr);
+          }
+          return;
+        }
+        const extractedContent = [
+          ...postRange.extractContents().firstChild.childNodes,
+        ];
+        extractedContent.forEach((node, index, list) => {
+          if (index === 0 && list.length === 1) {
+            const textNode = document.createTextNode(node.textContent);
+            const newNode =
+              textNode.textContent.length === 0
+                ? document.createElement("br")
+                : textNode;
+            $newLine.appendChild(newNode);
+          } else {
+            $newLine.appendChild(node);
+          }
+        });
+        selection.setPosition($newLine, 0);
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        const range = selection.getRangeAt(0);
+        const $currentLine = findClosestDiv(anchorNode);
+        if (!$currentLine) {
+          selection.setPosition(event.target, 0);
+          return;
+        }
+        const preRange = document.createRange();
+        preRange.setStart($currentLine, 0);
+        preRange.setEnd(range.startContainer, range.startOffset);
+        selection.removeAllRanges();
+        selection.addRange(preRange);
+        if (preRange.toString().length !== 0) {
+          selection.setPosition(anchorNode, anchorOffset);
+          return;
+        }
+        event.preventDefault();
+        const $prevLine = $currentLine.previousSibling;
+        const $title = document.querySelector("#title");
+        if (!$prevLine || $currentLine === $title) return;
+        const cursorSettingContainer = document.createTextNode("");
+        $prevLine.appendChild(cursorSettingContainer);
+        [...$currentLine.childNodes].forEach((node) => {
+          if (node.nodeName === "BR") return;
+          $prevLine.appendChild(node);
+        });
+        selection.setPosition(cursorSettingContainer, 0);
+        $prevLine.removeChild(cursorSettingContainer);
+        event.target.removeChild($currentLine);
+        return;
+      }
+    });
 
     this.$target.addEventListener("input", (event) => {
       const { target } = event;
+
       if (target.classList.contains("theme-toggle__button")) {
         this.setState({ ...this.state, isDarkMode: !this.state.isDarkMode });
         return;
@@ -155,10 +360,12 @@ export default class App extends Component {
             nextTitle,
             this.state.documents,
           );
+          const newPath = getPath(convertedList, id);
           this.setState({
             ...this.state,
             documents: convertedList,
             selected: { ...this.state.selected, title: nextTitle },
+            currentPath: newPath,
           });
           const $titleInput = document.querySelector("#title");
           selection.collapse($titleInput.firstChild, anchorOffset);
@@ -169,20 +376,41 @@ export default class App extends Component {
         }, 500);
         return;
       }
+
       if (target.classList.contains("editor--content")) {
+        const cursorParent =
+          selection.anchorNode.nodeName === "#text"
+            ? selection.anchorNode.parentNode
+            : selection.anchorNode;
+        if (!cursorParent.classList.contains("editor--content")) {
+          cursorParent.setAttribute("id", "current_cursor");
+        }
+        const currentInnerHTML = target.innerHTML;
         debounce(() => {
-          console.log("set");
+          const markdownText = replaceMarkdown(currentInnerHTML);
           this.setState({
             ...this.state,
-            selected: { ...this.state.selected, content: target.innerText },
+            selected: { ...this.state.selected, content: markdownText },
           });
-          const $contentInput = document.querySelector("#content");
-          selection.setPosition($contentInput.firstChild, anchorOffset);
+          let $currentCursor = document.querySelector("#current_cursor");
+          if ($currentCursor) {
+            selection.setPosition(
+              $currentCursor.firstChild,
+              $currentCursor.textContent.length < anchorOffset
+                ? $currentCursor.textContent.length
+                : anchorOffset,
+            );
+          }
+          while ($currentCursor) {
+            $currentCursor.removeAttribute("id");
+            $currentCursor = document.querySelector("#current_cursor");
+          }
+          const $editorContent = document.querySelector(".editor--content");
           updateDocument(`/${this.state.selected.id}`, {
             title: this.state.selected.title,
-            content: this.state.selected.content,
+            content: $editorContent.innerHTML,
           });
-        }, 500);
+        }, 300);
         return;
       }
     });
@@ -249,3 +477,52 @@ function getPath(documentList, id) {
   }
   return returnValue;
 }
+
+function replaceMarkdown(text) {
+  return text
+    .replace(/>-&nbsp;<\//g, ' class="markdown--list-item" >&nbsp;</')
+    .replace(/>\/#{1,4}&nbsp;<\//g, (match) => {
+      const headerNumber = match.split("#").length - 1;
+      return ` class="markdown--header${headerNumber}" >&nbsp;</`;
+    });
+}
+
+function findClosestDiv(node) {
+  let currentNode = node;
+  while (currentNode) {
+    if (currentNode.nodeName === "#text") {
+      currentNode = currentNode.parentNode;
+      continue;
+    }
+    if (currentNode.classList.contains("editor--content")) return null;
+    if (currentNode.nodeName === "DIV") {
+      return currentNode;
+    }
+
+    currentNode = currentNode.parentNode;
+  }
+  return null;
+}
+
+const initialSelected = {
+  id: null,
+  title: "📌마크다운 사용법",
+  content: `<div>반갑습니다👋👋👋, 간단한 마크다운을 지원하는 메모장 서비스입니다.</div>
+  <div class="markdown--header3">&nbsp;</div><div class="markdown--header3">&nbsp;지원되는 기능</div>
+  <div class="markdown--list-item">&nbsp;간단한 마크 다운 기능을 사용할 수 있습니다.&nbsp;</div>
+  <div class="markdown--list-item">&nbsp;텍스트를 입력하면 자동으로 저장되고 저장된 내용은 나중에 불러올 수 있습니다.&nbsp;</div>
+  <div class="markdown--list-item">&nbsp;우측 상단 스위치를 통해서 테마(다크 모드, 라이트 모드)를 변경할 수 있습니다.</div>
+  <div class="markdown--list-item">&nbsp;에디터 상단에는 브래드 크럼이 있어서 해당 문서의 위치를 알 수 있습니다.&nbsp;</div>
+  <div><br></div>
+  <div class="markdown--header3">&nbsp;지원되는 마크 다운</div><div class="markdown--list-item">&nbsp;헤더</div>
+  <div>헤더는 h1, h2, h3가 있습니다. 사용시 해당 라인 가장 앞 부분에서 '/# ', '/## ', '/### '을 써주시면 됩니다.&nbsp;</div>
+  <div class="markdown--header1">h1 /#</div><div class="markdown--header2">h2 /##&nbsp;</div><div class="markdown--header3">h3 /###</div>
+  <div><br></div>
+  <div class="markdown--list-item">&nbsp;리스트 아이템</div>
+  <div>리스트 아이템은 사용시 해당 라인 가장 앞 부분에서 '- ' 를 넣어주시면 됩니다.&nbsp;</div>
+  <div class="markdown--list-item">&nbsp;아이템</div><div class="markdown--list-item">&nbsp;아이템</div>
+  <div class="markdown--list-item">&nbsp;아이템</div><div><br></div>
+  <div class="markdown--list-item">&nbsp;취소선</div>
+  <div>취소선은 텍스트를 누르고 ctrl+s를 눌러주시면 됩니다.</div><div><s>취소선</s></div>
+  `,
+};
