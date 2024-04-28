@@ -78,13 +78,24 @@ export default class App extends Component {
   setEvent() {
     this.$target.addEventListener("pointerup", (event) => {
       const $editorContent = document.querySelector(".editor--content");
-      if (event.target !== $editorContent || $editorContent.hasChildNodes()) {
+      if (event.target !== $editorContent) {
         return;
       }
-      const $newLine = document.createElement("div");
-      $editorContent.appendChild($newLine);
-      window.getSelection().setPosition($newLine);
+      // 마지막이 br이면 삭제 후 $newline
+      if (!$editorContent.hasChildNodes()) {
+        const $newLine = document.createElement("div");
+        $editorContent.appendChild($newLine);
+        window.getSelection().setPosition($newLine);
+        return;
+      }
+      if ($editorContent.lastChild.nodeName === "BR") {
+        const $newLine = document.createElement("div");
+        $editorContent.replaceChild($newLine, $editorContent.lastChild);
+        window.getSelection().setPosition($newLine);
+        return;
+      }
     });
+
     this.$target.addEventListener("click", async (event) => {
       const { target } = event;
       if (target.classList.contains("breadcrumb__item")) {
@@ -164,16 +175,17 @@ export default class App extends Component {
         return;
       }
     });
-
+    // TODO 현재 커서우치가 editor라면 div를 씌워줘야하낟.
     this.$target.addEventListener("keydown", (event) => {
       const selection = window.getSelection();
       const { anchorNode, anchorOffset } = selection;
-
+      const $editorContent = document.querySelector(".editor--content");
+      if ($editorContent === anchorNode) return;
+      // 취소선
       if (event.ctrlKey && event.key === "s") {
         event.preventDefault();
         if (selection.rangeCount === 0) return;
         const range = selection.getRangeAt(0);
-
         const nodes = [];
         const sTagNodes = [];
         const treeWalker = document.createTreeWalker(
@@ -191,7 +203,6 @@ export default class App extends Component {
             }
           }
         }
-
         if (nodes.length === 0) {
           sTagNodes.forEach((node) => {
             if (node === range.startContainer && node === range.endContainer) {
@@ -201,7 +212,7 @@ export default class App extends Component {
               node.parentNode.removeChild(postTextNode);
               const newNode = document.createElement("s");
               newNode.textContent = postTextNode.textContent;
-              node.parentNode.after(targetNode, newNode);
+              node.parentNode.after(targetNode, postTextNode);
               return;
             }
             if (node === range.startContainer) {
@@ -224,6 +235,16 @@ export default class App extends Component {
               node.parentNode,
             );
           });
+          const $currentLine = findClosestDiv(selection.anchorNode);
+          if ($currentLine && $currentLine.hasChildNodes()) {
+            const childList = $currentLine.childNodes;
+            while (childList.length) {
+              const child = childList.pop();
+              if (child.textContent.length === 0) {
+                $currentLine.removeChild(child);
+              }
+            }
+          }
           return;
         }
 
@@ -254,97 +275,89 @@ export default class App extends Component {
           newNode.textContent = node.textContent;
           node.parentNode.replaceChild(newNode, node);
         });
+        caret.markCurrentCaretPosition();
+
+        debounce(() => {
+          this.setState({
+            ...this.state,
+            selected: {
+              ...this.state.selected,
+              content: $editorContent.innerHTML,
+            },
+          });
+          setCaretPosition();
+          updateDocument(`/${this.state.selected.id}`, {
+            title: this.state.selected.title,
+            content: $editorContent.innerHTML,
+          });
+        }, 500);
       }
+
       if (event.key === "Tab") {
         event.preventDefault();
         return;
       }
-      if (event.key === "Enter") {
-        event.preventDefault();
-        const range = selection.getRangeAt(0);
-        let $currentLine = findClosestDiv(range.startContainer);
-        const $title = document.querySelector("#title");
-        if (!$currentLine) {
-          $currentLine = document.createElement("div");
-          event.target.appendChild($currentLine);
-          selection.setPosition($currentLine, 0);
-        }
-        if ($currentLine === $title) {
-          return;
-        }
-        const postRange = document.createRange();
-        postRange.setStart(range.endContainer, range.endOffset);
-        const $nextLine = $currentLine.nextSibling;
-        const $newLine = document.createElement("div");
-        event.target.insertBefore($newLine, $nextLine);
-        postRange.setEndBefore($newLine);
-        selection.removeAllRanges();
-        selection.addRange(postRange);
-        if (postRange.toString().length === 0) {
-          const $br = document.createElement("br");
-          $newLine.appendChild($br);
-          selection.setPosition($newLine, 0);
-          if (!$currentLine.hasChildNodes()) {
-            const $currentBr = document.createElement("br");
-            $currentLine.appendChild($currentBr);
-          }
-          return;
-        }
-        const extractedContent = [
-          ...postRange.extractContents().firstChild.childNodes,
-        ];
-        extractedContent.forEach((node, index, list) => {
-          if (index === 0 && list.length === 1) {
-            const textNode = document.createTextNode(node.textContent);
-            const newNode =
-              textNode.textContent.length === 0
-                ? document.createElement("br")
-                : textNode;
-            $newLine.appendChild(newNode);
-          } else {
-            $newLine.appendChild(node);
-          }
-        });
-        selection.setPosition($newLine, 0);
-        return;
-      }
 
-      if (event.key === "Backspace") {
-        const range = selection.getRangeAt(0);
-        const $currentLine = findClosestDiv(anchorNode);
-        if (!$currentLine) {
-          selection.setPosition(event.target, 0);
-          return;
+      if (event.key === "Enter") {
+        if (event.target.classList.contains("editor--title")) {
+          event.preventDefault();
+          const $firstLine = $editorContent.firstChild;
+          const $newLine = document.createElement("div");
+          const nextRange = document.createRange();
+          $editorContent.insertBefore($newLine, $firstLine);
+          nextRange.selectNodeContents($newLine);
+          selection.removeAllRanges();
+          selection.addRange(nextRange);
+          selection.collapseToEnd();
         }
+        if (event.target.classList.contains("editor--content")) {
+          event.preventDefault();
+          const $currentLine = findClosestDiv(anchorNode);
+          const $nextLine = $currentLine.nextSibling;
+          const $mark = caret.markCurrentCaretPosition();
+          const postRange = document.createRange();
+          postRange.setEndAfter($currentLine);
+          postRange.setStartBefore($mark);
+          selection.removeAllRanges();
+          selection.addRange(postRange);
+          const extractedContents =
+            postRange.extractContents().firstChild.childNodes;
+          console.log(extractedContents);
+          const $newLine = document.createElement("div");
+          $newLine.append(...extractedContents);
+          $editorContent.insertBefore($newLine, $nextLine);
+          caret.setCaretPosition();
+        }
+      }
+      if (event.key === "Backspace") {
+        const $currentLine = findClosestDiv(selection.anchorNode);
+        const range = selection.getRangeAt(0);
+        if (!$currentLine) return;
+        const $mark = caret.markCurrentCaretPosition();
         const preRange = document.createRange();
         preRange.setStart($currentLine, 0);
         preRange.setEnd(range.startContainer, range.startOffset);
         selection.removeAllRanges();
         selection.addRange(preRange);
-        if (preRange.toString().length !== 0) {
-          selection.setPosition(anchorNode, anchorOffset);
-          return;
+        if (preRange.toString().length === 1) {
+          event.preventDefault();
+          const prevContent = $mark.previousSibling;
+          const text = document.createTextNode("");
+          $currentLine.replaceChild(text, prevContent);
+        } else if (preRange.toString().length === 0) {
+          event.preventDefault();
+          const $prevLine = $currentLine.previousSibling;
+          if ($prevLine && $prevLine.nodeName === "DIV") {
+            $prevLine.append(...$currentLine.childNodes);
+            $currentLine.remove();
+          }
         }
-        event.preventDefault();
-        const $prevLine = $currentLine.previousSibling;
-        const $title = document.querySelector("#title");
-        if (!$prevLine || $currentLine === $title) return;
-        const cursorSettingContainer = document.createTextNode("");
-        $prevLine.appendChild(cursorSettingContainer);
-        [...$currentLine.childNodes].forEach((node) => {
-          if (node.nodeName === "BR") return;
-          $prevLine.appendChild(node);
-        });
-        selection.setPosition(cursorSettingContainer, 0);
-        $prevLine.removeChild(cursorSettingContainer);
-        event.target.removeChild($currentLine);
-        return;
+        caret.setCaretPosition();
       }
     });
 
     this.$target.addEventListener("input", (event) => {
       const { target } = event;
-
       if (target.classList.contains("theme-toggle__button")) {
         this.setState({ ...this.state, isDarkMode: !this.state.isDarkMode });
         return;
@@ -378,40 +391,23 @@ export default class App extends Component {
       }
 
       if (target.classList.contains("editor--content")) {
-        const cursorParent =
-          selection.anchorNode.nodeName === "#text"
-            ? selection.anchorNode.parentNode
-            : selection.anchorNode;
-        if (!cursorParent.classList.contains("editor--content")) {
-          cursorParent.setAttribute("id", "current_cursor");
-        }
-        const currentInnerHTML = target.innerHTML;
-        debounce(() => {
-          const markdownText = replaceMarkdown(currentInnerHTML);
-          this.setState({
-            ...this.state,
-            selected: { ...this.state.selected, content: markdownText },
-          });
-          let $currentCursor = document.querySelector("#current_cursor");
-          if ($currentCursor) {
-            selection.setPosition(
-              $currentCursor.firstChild,
-              $currentCursor.textContent.length < anchorOffset
-                ? $currentCursor.textContent.length
-                : anchorOffset,
-            );
-          }
-          while ($currentCursor) {
-            $currentCursor.removeAttribute("id");
-            $currentCursor = document.querySelector("#current_cursor");
-          }
-          const $editorContent = document.querySelector(".editor--content");
-          updateDocument(`/${this.state.selected.id}`, {
-            title: this.state.selected.title,
-            content: $editorContent.innerHTML,
-          });
-        }, 300);
-        return;
+        const $currentLine = findClosestDiv(selection.anchorNode);
+
+        //   debounce(() => {
+        //     // 앞뒤로 배치?보다는 setState를 콜백으로 받아서 처리하자
+        //     caret.markCurrentCaretPosition();
+        //     const markdownText = replaceMarkdown(target.innerHTML);
+        //     this.setState({
+        //       ...this.state,
+        //       selected: { ...this.state.selected, content: markdownText },
+        //     });
+        //     caret.setCaretPosition();
+        //     updateDocument(`/${this.state.selected.id}`, {
+        //       title: this.state.selected.title,
+        //       content: this.state.selected.content,
+        //     });
+        //   }, 500);
+        //   return;
       }
     });
   }
@@ -526,3 +522,32 @@ const initialSelected = {
   <div>취소선은 텍스트를 누르고 ctrl+s를 눌러주시면 됩니다.</div><div><s>취소선</s></div>
   `,
 };
+
+const caret = { markCurrentCaretPosition, setCaretPosition };
+
+function markCurrentCaretPosition() {
+  const selection = window.getSelection();
+  const { anchorNode, anchorOffset } = selection;
+  const range = selection.getRangeAt(0);
+  if (
+    (anchorNode.nodeName !== "#text" &&
+      anchorNode.classList.contains("editor--content")) ||
+    (anchorNode.nodeName === "#text" &&
+      anchorNode.parentNode.classList.contains("editor--content"))
+  )
+    return;
+  const $mark = document.createElement("span");
+  $mark.setAttribute("id", "current_cursor");
+  range.insertNode($mark);
+  return $mark;
+}
+function setCaretPosition() {
+  const selection = window.getSelection();
+  let $mark = document.querySelector("#current_cursor");
+  if (!$mark) return;
+  selection.setPosition($mark, 0);
+  while ($mark) {
+    $mark.remove();
+    $mark = document.querySelector("#current_cursor");
+  }
+}
