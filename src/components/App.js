@@ -9,7 +9,10 @@ import {
 import EditorPage from "./EditorPage.js";
 import ListPage from "./ListPage.js";
 import { getItem, setItem } from "../utils/storage.js";
-import { IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
+import {
+  IS_OPEN_STATE_LIST_KEY,
+  INITIAL_SELECTED,
+} from "../constant/constant.js";
 import { initRouter, push } from "../utils/router.js";
 import { debounce } from "../utils/debounce.js";
 
@@ -17,7 +20,7 @@ export default class App extends Component {
   async setUp() {
     this.state = {
       documents: [],
-      selected: initialSelected,
+      selected: INITIAL_SELECTED,
       isDarkMode: false,
       currentPath: null,
     };
@@ -108,7 +111,7 @@ export default class App extends Component {
         push();
         this.setState({
           ...this.state,
-          selected: initialSelected,
+          selected: INITIAL_SELECTED,
           currentPath: null,
         });
         return;
@@ -141,7 +144,7 @@ export default class App extends Component {
           this.setState({
             ...this.state,
             documents,
-            selected: initialSelected,
+            selected: INITIAL_SELECTED,
             currentPath: null,
           });
           push();
@@ -175,13 +178,12 @@ export default class App extends Component {
         return;
       }
     });
-    // TODO 현재 커서우치가 editor라면 div를 씌워줘야하낟.
+
     this.$target.addEventListener("keydown", (event) => {
       const selection = window.getSelection();
       const { anchorNode, anchorOffset } = selection;
       const $editorContent = document.querySelector(".editor--content");
       if ($editorContent === anchorNode) return;
-      // 취소선
       if (event.ctrlKey && event.key === "s") {
         event.preventDefault();
         if (selection.rangeCount === 0) return;
@@ -297,7 +299,6 @@ export default class App extends Component {
         event.preventDefault();
         return;
       }
-
       if (event.key === "Enter") {
         if (event.target.classList.contains("editor--title")) {
           event.preventDefault();
@@ -322,13 +323,13 @@ export default class App extends Component {
           selection.addRange(postRange);
           const extractedContents =
             postRange.extractContents().firstChild.childNodes;
-          console.log(extractedContents);
           const $newLine = document.createElement("div");
           $newLine.append(...extractedContents);
           $editorContent.insertBefore($newLine, $nextLine);
           caret.setCaretPosition();
         }
       }
+
       if (event.key === "Backspace") {
         const $currentLine = findClosestDiv(selection.anchorNode);
         const range = selection.getRangeAt(0);
@@ -343,7 +344,7 @@ export default class App extends Component {
           event.preventDefault();
           const prevContent = $mark.previousSibling;
           const text = document.createTextNode("");
-          $currentLine.replaceChild(text, prevContent);
+          prevContent.parentNode.replaceChild(text, prevContent);
         } else if (preRange.toString().length === 0) {
           event.preventDefault();
           const $prevLine = $currentLine.previousSibling;
@@ -391,23 +392,21 @@ export default class App extends Component {
       }
 
       if (target.classList.contains("editor--content")) {
-        const $currentLine = findClosestDiv(selection.anchorNode);
-
-        //   debounce(() => {
-        //     // 앞뒤로 배치?보다는 setState를 콜백으로 받아서 처리하자
-        //     caret.markCurrentCaretPosition();
-        //     const markdownText = replaceMarkdown(target.innerHTML);
-        //     this.setState({
-        //       ...this.state,
-        //       selected: { ...this.state.selected, content: markdownText },
-        //     });
-        //     caret.setCaretPosition();
-        //     updateDocument(`/${this.state.selected.id}`, {
-        //       title: this.state.selected.title,
-        //       content: this.state.selected.content,
-        //     });
-        //   }, 500);
-        //   return;
+        debounce(() => {
+          // 앞뒤로 배치?보다는 setState를 콜백으로 받아서 처리하자
+          caret.markCurrentCaretPosition();
+          const markdownText = replaceMarkdown(target.innerHTML);
+          this.setState({
+            ...this.state,
+            selected: { ...this.state.selected, content: markdownText },
+          });
+          caret.setCaretPosition();
+          updateDocument(`/${this.state.selected.id}`, {
+            title: this.state.selected.title,
+            content: this.state.selected.content,
+          });
+        }, 500);
+        return;
       }
     });
   }
@@ -480,7 +479,8 @@ function replaceMarkdown(text) {
     .replace(/>\/#{1,4}&nbsp;<\//g, (match) => {
       const headerNumber = match.split("#").length - 1;
       return ` class="markdown--header${headerNumber}" >&nbsp;</`;
-    });
+    })
+    .replaceAll("<s></s>", "");
 }
 
 function findClosestDiv(node) {
@@ -499,29 +499,6 @@ function findClosestDiv(node) {
   }
   return null;
 }
-
-const initialSelected = {
-  id: null,
-  title: "📌마크다운 사용법",
-  content: `<div>반갑습니다👋👋👋, 간단한 마크다운을 지원하는 메모장 서비스입니다.</div>
-  <div class="markdown--header3">&nbsp;</div><div class="markdown--header3">&nbsp;지원되는 기능</div>
-  <div class="markdown--list-item">&nbsp;간단한 마크 다운 기능을 사용할 수 있습니다.&nbsp;</div>
-  <div class="markdown--list-item">&nbsp;텍스트를 입력하면 자동으로 저장되고 저장된 내용은 나중에 불러올 수 있습니다.&nbsp;</div>
-  <div class="markdown--list-item">&nbsp;우측 상단 스위치를 통해서 테마(다크 모드, 라이트 모드)를 변경할 수 있습니다.</div>
-  <div class="markdown--list-item">&nbsp;에디터 상단에는 브래드 크럼이 있어서 해당 문서의 위치를 알 수 있습니다.&nbsp;</div>
-  <div><br></div>
-  <div class="markdown--header3">&nbsp;지원되는 마크 다운</div><div class="markdown--list-item">&nbsp;헤더</div>
-  <div>헤더는 h1, h2, h3가 있습니다. 사용시 해당 라인 가장 앞 부분에서 '/# ', '/## ', '/### '을 써주시면 됩니다.&nbsp;</div>
-  <div class="markdown--header1">h1 /#</div><div class="markdown--header2">h2 /##&nbsp;</div><div class="markdown--header3">h3 /###</div>
-  <div><br></div>
-  <div class="markdown--list-item">&nbsp;리스트 아이템</div>
-  <div>리스트 아이템은 사용시 해당 라인 가장 앞 부분에서 '- ' 를 넣어주시면 됩니다.&nbsp;</div>
-  <div class="markdown--list-item">&nbsp;아이템</div><div class="markdown--list-item">&nbsp;아이템</div>
-  <div class="markdown--list-item">&nbsp;아이템</div><div><br></div>
-  <div class="markdown--list-item">&nbsp;취소선</div>
-  <div>취소선은 텍스트를 누르고 ctrl+s를 눌러주시면 됩니다.</div><div><s>취소선</s></div>
-  `,
-};
 
 const caret = { markCurrentCaretPosition, setCaretPosition };
 
