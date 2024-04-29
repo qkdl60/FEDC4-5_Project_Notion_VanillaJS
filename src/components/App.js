@@ -394,7 +394,9 @@ export default class App extends Component {
       if (target.classList.contains("editor--content")) {
         debounce(() => {
           caret.markCurrentCaretPosition();
-          const markdownText = replaceMarkdown(target.innerHTML);
+          const $editorContent = document.querySelector(".editor--content");
+          console.log($editorContent.innerHTML);
+          const markdownText = replaceMarkdown($editorContent.innerHTML);
           this.setState({
             ...this.state,
             selected: { ...this.state.selected, content: markdownText },
@@ -476,11 +478,10 @@ function getPath(documentList, id) {
 function replaceMarkdown(text) {
   return text
     .replace(/>-&nbsp;<\//g, ' class="markdown--list-item" >&nbsp;</')
-    .replace(/>\/#{1,4}&nbsp;<\//g, (match) => {
+    .replace(/>\/#{1,4}&nbsp;/g, (match) => {
       const headerNumber = match.split("#").length - 1;
-      return ` class="markdown--header${headerNumber}" >&nbsp;</`;
-    })
-    .replaceAll("<s></s>", "");
+      return ` class="markdown--header${headerNumber}" >&nbsp;`;
+    });
 }
 
 function findClosestDiv(node) {
