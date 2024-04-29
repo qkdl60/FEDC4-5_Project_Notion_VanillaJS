@@ -477,7 +477,7 @@ function getPath(documentList, id) {
 
 function replaceMarkdown(text) {
   return text
-    .replace(/>-&nbsp;<\//g, ' class="markdown--list-item" >&nbsp;</')
+    .replace(/>-&nbsp;/g, ' class="markdown--list-item" >&nbsp;')
     .replace(/>\/#{1,4}&nbsp;/g, (match) => {
       const headerNumber = match.split("#").length - 1;
       return ` class="markdown--header${headerNumber}" >&nbsp;`;
