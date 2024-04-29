@@ -6,6 +6,7 @@ import {
   getDocumentsTree,
   updateDocument,
 } from "../utils/api.js";
+import { caret } from "../utils/caret.js";
 import EditorPage from "./EditorPage.js";
 import ListPage from "./ListPage.js";
 import { getItem, setItem } from "../utils/storage.js";
@@ -84,7 +85,6 @@ export default class App extends Component {
       if (event.target !== $editorContent) {
         return;
       }
-      // 마지막이 br이면 삭제 후 $newline
       if (!$editorContent.hasChildNodes()) {
         const $newLine = document.createElement("div");
         $editorContent.appendChild($newLine);
@@ -287,7 +287,7 @@ export default class App extends Component {
               content: $editorContent.innerHTML,
             },
           });
-          setCaretPosition();
+          caret.setCaretPosition();
           updateDocument(`/${this.state.selected.id}`, {
             title: this.state.selected.title,
             content: $editorContent.innerHTML,
@@ -393,7 +393,6 @@ export default class App extends Component {
 
       if (target.classList.contains("editor--content")) {
         debounce(() => {
-          // 앞뒤로 배치?보다는 setState를 콜백으로 받아서 처리하자
           caret.markCurrentCaretPosition();
           const markdownText = replaceMarkdown(target.innerHTML);
           this.setState({
@@ -411,6 +410,7 @@ export default class App extends Component {
     });
   }
 }
+
 async function updateDocumentList(openList) {
   const documentsTree = await getDocumentsTree();
   const copiedTree = structuredClone(documentsTree);
@@ -498,33 +498,4 @@ function findClosestDiv(node) {
     currentNode = currentNode.parentNode;
   }
   return null;
-}
-
-const caret = { markCurrentCaretPosition, setCaretPosition };
-
-function markCurrentCaretPosition() {
-  const selection = window.getSelection();
-  const { anchorNode, anchorOffset } = selection;
-  const range = selection.getRangeAt(0);
-  if (
-    (anchorNode.nodeName !== "#text" &&
-      anchorNode.classList.contains("editor--content")) ||
-    (anchorNode.nodeName === "#text" &&
-      anchorNode.parentNode.classList.contains("editor--content"))
-  )
-    return;
-  const $mark = document.createElement("span");
-  $mark.setAttribute("id", "current_cursor");
-  range.insertNode($mark);
-  return $mark;
-}
-function setCaretPosition() {
-  const selection = window.getSelection();
-  let $mark = document.querySelector("#current_cursor");
-  if (!$mark) return;
-  selection.setPosition($mark, 0);
-  while ($mark) {
-    $mark.remove();
-    $mark = document.querySelector("#current_cursor");
-  }
 }
