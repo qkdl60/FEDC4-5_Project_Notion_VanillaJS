@@ -247,10 +247,11 @@ button:hover {
           padding: 0.25rem;
         }
       }
-
+      /* 포커스 되었을때 만 */
       .editor--content[contentEditable="true"]:empty::before {
         content: attr(placeholder);
         color: var(--placeholder-color);
+        cursor: text;
       }
       .editor--title:focus,
       .editor--content:focus {

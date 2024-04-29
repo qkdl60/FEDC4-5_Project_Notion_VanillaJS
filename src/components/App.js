@@ -6,10 +6,14 @@ import {
   getDocumentsTree,
   updateDocument,
 } from "../utils/api.js";
+import { caret } from "../utils/caret.js";
 import EditorPage from "./EditorPage.js";
 import ListPage from "./ListPage.js";
 import { getItem, setItem } from "../utils/storage.js";
-import { IS_OPEN_STATE_LIST_KEY } from "../constant/constant.js";
+import {
+  IS_OPEN_STATE_LIST_KEY,
+  INITIAL_SELECTED,
+} from "../constant/constant.js";
 import { initRouter, push } from "../utils/router.js";
 import { debounce } from "../utils/debounce.js";
 
@@ -17,7 +21,7 @@ export default class App extends Component {
   async setUp() {
     this.state = {
       documents: [],
-      selected: initialSelected,
+      selected: INITIAL_SELECTED,
       isDarkMode: false,
       currentPath: null,
     };
@@ -78,13 +82,23 @@ export default class App extends Component {
   setEvent() {
     this.$target.addEventListener("pointerup", (event) => {
       const $editorContent = document.querySelector(".editor--content");
-      if (event.target !== $editorContent || $editorContent.hasChildNodes()) {
+      if (event.target !== $editorContent) {
         return;
       }
-      const $newLine = document.createElement("div");
-      $editorContent.appendChild($newLine);
-      window.getSelection().setPosition($newLine);
+      if (!$editorContent.hasChildNodes()) {
+        const $newLine = document.createElement("div");
+        $editorContent.appendChild($newLine);
+        window.getSelection().setPosition($newLine);
+        return;
+      }
+      if ($editorContent.lastChild.nodeName === "BR") {
+        const $newLine = document.createElement("div");
+        $editorContent.replaceChild($newLine, $editorContent.lastChild);
+        window.getSelection().setPosition($newLine);
+        return;
+      }
     });
+
     this.$target.addEventListener("click", async (event) => {
       const { target } = event;
       if (target.classList.contains("breadcrumb__item")) {
@@ -97,7 +111,7 @@ export default class App extends Component {
         push();
         this.setState({
           ...this.state,
-          selected: initialSelected,
+          selected: INITIAL_SELECTED,
           currentPath: null,
         });
         return;
@@ -130,7 +144,7 @@ export default class App extends Component {
           this.setState({
             ...this.state,
             documents,
-            selected: initialSelected,
+            selected: INITIAL_SELECTED,
             currentPath: null,
           });
           push();
@@ -168,12 +182,12 @@ export default class App extends Component {
     this.$target.addEventListener("keydown", (event) => {
       const selection = window.getSelection();
       const { anchorNode, anchorOffset } = selection;
-
+      const $editorContent = document.querySelector(".editor--content");
+      if ($editorContent === anchorNode) return;
       if (event.ctrlKey && event.key === "s") {
         event.preventDefault();
         if (selection.rangeCount === 0) return;
         const range = selection.getRangeAt(0);
-
         const nodes = [];
         const sTagNodes = [];
         const treeWalker = document.createTreeWalker(
@@ -191,7 +205,6 @@ export default class App extends Component {
             }
           }
         }
-
         if (nodes.length === 0) {
           sTagNodes.forEach((node) => {
             if (node === range.startContainer && node === range.endContainer) {
@@ -201,7 +214,7 @@ export default class App extends Component {
               node.parentNode.removeChild(postTextNode);
               const newNode = document.createElement("s");
               newNode.textContent = postTextNode.textContent;
-              node.parentNode.after(targetNode, newNode);
+              node.parentNode.after(targetNode, postTextNode);
               return;
             }
             if (node === range.startContainer) {
@@ -224,6 +237,16 @@ export default class App extends Component {
               node.parentNode,
             );
           });
+          const $currentLine = findClosestDiv(selection.anchorNode);
+          if ($currentLine && $currentLine.hasChildNodes()) {
+            const childList = $currentLine.childNodes;
+            while (childList.length) {
+              const child = childList.pop();
+              if (child.textContent.length === 0) {
+                $currentLine.removeChild(child);
+              }
+            }
+          }
           return;
         }
 
@@ -254,97 +277,88 @@ export default class App extends Component {
           newNode.textContent = node.textContent;
           node.parentNode.replaceChild(newNode, node);
         });
+        caret.markCurrentCaretPosition();
+
+        debounce(() => {
+          this.setState({
+            ...this.state,
+            selected: {
+              ...this.state.selected,
+              content: $editorContent.innerHTML,
+            },
+          });
+          caret.setCaretPosition();
+          updateDocument(`/${this.state.selected.id}`, {
+            title: this.state.selected.title,
+            content: $editorContent.innerHTML,
+          });
+        }, 500);
       }
+
       if (event.key === "Tab") {
         event.preventDefault();
         return;
       }
       if (event.key === "Enter") {
-        event.preventDefault();
-        const range = selection.getRangeAt(0);
-        let $currentLine = findClosestDiv(range.startContainer);
-        const $title = document.querySelector("#title");
-        if (!$currentLine) {
-          $currentLine = document.createElement("div");
-          event.target.appendChild($currentLine);
-          selection.setPosition($currentLine, 0);
+        if (event.target.classList.contains("editor--title")) {
+          event.preventDefault();
+          const $firstLine = $editorContent.firstChild;
+          const $newLine = document.createElement("div");
+          const nextRange = document.createRange();
+          $editorContent.insertBefore($newLine, $firstLine);
+          nextRange.selectNodeContents($newLine);
+          selection.removeAllRanges();
+          selection.addRange(nextRange);
+          selection.collapseToEnd();
         }
-        if ($currentLine === $title) {
-          return;
+        if (event.target.classList.contains("editor--content")) {
+          event.preventDefault();
+          const $currentLine = findClosestDiv(anchorNode);
+          const $nextLine = $currentLine.nextSibling;
+          const $mark = caret.markCurrentCaretPosition();
+          const postRange = document.createRange();
+          postRange.setEndAfter($currentLine);
+          postRange.setStartBefore($mark);
+          selection.removeAllRanges();
+          selection.addRange(postRange);
+          const extractedContents =
+            postRange.extractContents().firstChild.childNodes;
+          const $newLine = document.createElement("div");
+          $newLine.append(...extractedContents);
+          $editorContent.insertBefore($newLine, $nextLine);
+          caret.setCaretPosition();
         }
-        const postRange = document.createRange();
-        postRange.setStart(range.endContainer, range.endOffset);
-        const $nextLine = $currentLine.nextSibling;
-        const $newLine = document.createElement("div");
-        event.target.insertBefore($newLine, $nextLine);
-        postRange.setEndBefore($newLine);
-        selection.removeAllRanges();
-        selection.addRange(postRange);
-        if (postRange.toString().length === 0) {
-          const $br = document.createElement("br");
-          $newLine.appendChild($br);
-          selection.setPosition($newLine, 0);
-          if (!$currentLine.hasChildNodes()) {
-            const $currentBr = document.createElement("br");
-            $currentLine.appendChild($currentBr);
-          }
-          return;
-        }
-        const extractedContent = [
-          ...postRange.extractContents().firstChild.childNodes,
-        ];
-        extractedContent.forEach((node, index, list) => {
-          if (index === 0 && list.length === 1) {
-            const textNode = document.createTextNode(node.textContent);
-            const newNode =
-              textNode.textContent.length === 0
-                ? document.createElement("br")
-                : textNode;
-            $newLine.appendChild(newNode);
-          } else {
-            $newLine.appendChild(node);
-          }
-        });
-        selection.setPosition($newLine, 0);
-        return;
       }
 
       if (event.key === "Backspace") {
+        const $currentLine = findClosestDiv(selection.anchorNode);
         const range = selection.getRangeAt(0);
-        const $currentLine = findClosestDiv(anchorNode);
-        if (!$currentLine) {
-          selection.setPosition(event.target, 0);
-          return;
-        }
+        if (!$currentLine) return;
+        const $mark = caret.markCurrentCaretPosition();
         const preRange = document.createRange();
         preRange.setStart($currentLine, 0);
         preRange.setEnd(range.startContainer, range.startOffset);
         selection.removeAllRanges();
         selection.addRange(preRange);
-        if (preRange.toString().length !== 0) {
-          selection.setPosition(anchorNode, anchorOffset);
-          return;
+        if (preRange.toString().length === 1) {
+          event.preventDefault();
+          const prevContent = $mark.previousSibling;
+          const text = document.createTextNode("");
+          prevContent.parentNode.replaceChild(text, prevContent);
+        } else if (preRange.toString().length === 0) {
+          event.preventDefault();
+          const $prevLine = $currentLine.previousSibling;
+          if ($prevLine && $prevLine.nodeName === "DIV") {
+            $prevLine.append(...$currentLine.childNodes);
+            $currentLine.remove();
+          }
         }
-        event.preventDefault();
-        const $prevLine = $currentLine.previousSibling;
-        const $title = document.querySelector("#title");
-        if (!$prevLine || $currentLine === $title) return;
-        const cursorSettingContainer = document.createTextNode("");
-        $prevLine.appendChild(cursorSettingContainer);
-        [...$currentLine.childNodes].forEach((node) => {
-          if (node.nodeName === "BR") return;
-          $prevLine.appendChild(node);
-        });
-        selection.setPosition(cursorSettingContainer, 0);
-        $prevLine.removeChild(cursorSettingContainer);
-        event.target.removeChild($currentLine);
-        return;
+        caret.setCaretPosition();
       }
     });
 
     this.$target.addEventListener("input", (event) => {
       const { target } = event;
-
       if (target.classList.contains("theme-toggle__button")) {
         this.setState({ ...this.state, isDarkMode: !this.state.isDarkMode });
         return;
@@ -378,44 +392,25 @@ export default class App extends Component {
       }
 
       if (target.classList.contains("editor--content")) {
-        const cursorParent =
-          selection.anchorNode.nodeName === "#text"
-            ? selection.anchorNode.parentNode
-            : selection.anchorNode;
-        if (!cursorParent.classList.contains("editor--content")) {
-          cursorParent.setAttribute("id", "current_cursor");
-        }
-        const currentInnerHTML = target.innerHTML;
         debounce(() => {
-          const markdownText = replaceMarkdown(currentInnerHTML);
+          caret.markCurrentCaretPosition();
+          const markdownText = replaceMarkdown(target.innerHTML);
           this.setState({
             ...this.state,
             selected: { ...this.state.selected, content: markdownText },
           });
-          let $currentCursor = document.querySelector("#current_cursor");
-          if ($currentCursor) {
-            selection.setPosition(
-              $currentCursor.firstChild,
-              $currentCursor.textContent.length < anchorOffset
-                ? $currentCursor.textContent.length
-                : anchorOffset,
-            );
-          }
-          while ($currentCursor) {
-            $currentCursor.removeAttribute("id");
-            $currentCursor = document.querySelector("#current_cursor");
-          }
-          const $editorContent = document.querySelector(".editor--content");
+          caret.setCaretPosition();
           updateDocument(`/${this.state.selected.id}`, {
             title: this.state.selected.title,
-            content: $editorContent.innerHTML,
+            content: this.state.selected.content,
           });
-        }, 300);
+        }, 500);
         return;
       }
     });
   }
 }
+
 async function updateDocumentList(openList) {
   const documentsTree = await getDocumentsTree();
   const copiedTree = structuredClone(documentsTree);
@@ -484,7 +479,8 @@ function replaceMarkdown(text) {
     .replace(/>\/#{1,4}&nbsp;<\//g, (match) => {
       const headerNumber = match.split("#").length - 1;
       return ` class="markdown--header${headerNumber}" >&nbsp;</`;
-    });
+    })
+    .replaceAll("<s></s>", "");
 }
 
 function findClosestDiv(node) {
@@ -503,26 +499,3 @@ function findClosestDiv(node) {
   }
   return null;
 }
-
-const initialSelected = {
-  id: null,
-  title: "📌마크다운 사용법",
-  content: `<div>반갑습니다👋👋👋, 간단한 마크다운을 지원하는 메모장 서비스입니다.</div>
-  <div class="markdown--header3">&nbsp;</div><div class="markdown--header3">&nbsp;지원되는 기능</div>
-  <div class="markdown--list-item">&nbsp;간단한 마크 다운 기능을 사용할 수 있습니다.&nbsp;</div>
-  <div class="markdown--list-item">&nbsp;텍스트를 입력하면 자동으로 저장되고 저장된 내용은 나중에 불러올 수 있습니다.&nbsp;</div>
-  <div class="markdown--list-item">&nbsp;우측 상단 스위치를 통해서 테마(다크 모드, 라이트 모드)를 변경할 수 있습니다.</div>
-  <div class="markdown--list-item">&nbsp;에디터 상단에는 브래드 크럼이 있어서 해당 문서의 위치를 알 수 있습니다.&nbsp;</div>
-  <div><br></div>
-  <div class="markdown--header3">&nbsp;지원되는 마크 다운</div><div class="markdown--list-item">&nbsp;헤더</div>
-  <div>헤더는 h1, h2, h3가 있습니다. 사용시 해당 라인 가장 앞 부분에서 '/# ', '/## ', '/### '을 써주시면 됩니다.&nbsp;</div>
-  <div class="markdown--header1">h1 /#</div><div class="markdown--header2">h2 /##&nbsp;</div><div class="markdown--header3">h3 /###</div>
-  <div><br></div>
-  <div class="markdown--list-item">&nbsp;리스트 아이템</div>
-  <div>리스트 아이템은 사용시 해당 라인 가장 앞 부분에서 '- ' 를 넣어주시면 됩니다.&nbsp;</div>
-  <div class="markdown--list-item">&nbsp;아이템</div><div class="markdown--list-item">&nbsp;아이템</div>
-  <div class="markdown--list-item">&nbsp;아이템</div><div><br></div>
-  <div class="markdown--list-item">&nbsp;취소선</div>
-  <div>취소선은 텍스트를 누르고 ctrl+s를 눌러주시면 됩니다.</div><div><s>취소선</s></div>
-  `,
-};
