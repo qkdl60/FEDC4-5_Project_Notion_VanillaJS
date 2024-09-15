@@ -7,6 +7,7 @@ module.exports = {
     "airbnb-base",
     "plugin:prettier/recommended",
     "plugin:import/recommended",
+    "plugin:react/recommended",
   ],
   overrides: [
     {
@@ -41,6 +42,8 @@ module.exports = {
     "no-new": "off",
     "no-continue": "off",
     "prettier/prettier": ["error", { endOfLine: "auto" }],
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
   },
   settings: {
     "import/resolver": {
