@@ -35,6 +35,11 @@ export function render(element, container) {
         $el.setAttribute("class", value);
         return;
       }
+      if (key.startsWith("on") && typeof value === "function") {
+        const eventType = key.toLowerCase().slice(2);
+        $el.addEventListener(eventType, value);
+        return;
+      }
       $el.setAttribute(key, value);
     });
     children.forEach((child) => {
