@@ -1,3 +1,10 @@
+const core = {
+  root: null,
+  rootComponent: null,
+  stateList: [],
+  setterList: [],
+  cursor: 0,
+};
 export function createElement(type, props, ...children) {
   const parsedChilde = children.map((child) => {
     if (typeof child === "string" || typeof child === "number")
@@ -14,8 +21,13 @@ export function createElement(type, props, ...children) {
     props: { ...props, children: parsedChilde },
   };
 }
+export function rootRender(rootComponent, root) {
+  core.root = root;
+  core.rootComponent = rootComponent;
+  render(core.rootComponent, core.root);
+}
 
-export function render(element, container) {
+function render(element, container) {
   const { type, props } = element;
   const { children, ...restProps } = props;
   let $el;
@@ -47,4 +59,26 @@ export function render(element, container) {
     });
   }
   container.appendChild($el);
+}
+
+//리렌더시 초기화
+const createSetter = (cursor) => {
+  return (newState) => {
+    core.stateList[cursor] = newState;
+    core.root.innerHTML = "";
+    render(core.rootComponent, core.root);
+    core.cursor = 0;
+  };
+};
+
+export function useState(initialState) {
+  if (!core.setterList[core.cursor])
+    core.setterList.push(createSetter(core.cursor));
+  if (!core.stateList[core.cursor]) core.stateList.push(initialState);
+
+  const state = core.stateList[core.cursor];
+  const setState = core.setterList[core.cursor];
+  core.cursor++;
+
+  return [state, setState];
 }
