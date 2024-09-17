@@ -4,7 +4,20 @@ const core = {
   stateList: [],
   setterList: [],
   cursor: 0,
+  vDOM: null,
 };
+
+const createVirtualDOM = (element) => {
+  if (typeof element.type === "function") {
+    return createVirtualDOM(element.type(element.props));
+  }
+  return {
+    type: element.type,
+    props: element.props,
+    children: element.children.map(createVirtualDOM),
+  };
+};
+
 export function createElement(type, props, ...children) {
   const parsedChilde = children.map((child) => {
     if (typeof child === "string" || typeof child === "number")
@@ -13,35 +26,33 @@ export function createElement(type, props, ...children) {
         props: {
           value: child,
         },
+        children: [],
       };
     return child;
   });
   return {
     type,
-    props: { ...props, children: parsedChilde },
+    props: { ...props },
+    children: parsedChilde,
   };
 }
+
 export function rootRender(rootComponent, root) {
   core.root = root;
   core.rootComponent = rootComponent;
-  render(core.rootComponent, core.root);
+  core.vDOM = createVirtualDOM(rootComponent);
+  console.log(core.vDOM);
+  renderRealDOM(core.vDOM, core.root);
 }
 
-function render(element, container) {
-  const { type, props } = element;
-  const { children, ...restProps } = props;
+function renderRealDOM(element, container) {
+  const { type, props, children } = element;
   let $el;
-  // 함수형 컴포넌트 렌더링
-  if (typeof type === "function") {
-    const resultEl = type(props);
-    render(resultEl, container);
-    return;
-  }
   if (type === "text") {
-    $el = document.createTextNode(restProps.value);
+    $el = document.createTextNode(props.value);
   } else {
     $el = document.createElement(type);
-    Object.entries(restProps).forEach(([key, value]) => {
+    Object.entries(props).forEach(([key, value]) => {
       // jsx 규칙상 class가 className으로 들어온다
       if (key === "className") {
         $el.setAttribute("class", value);
@@ -55,7 +66,7 @@ function render(element, container) {
       $el.setAttribute(key, value);
     });
     children.forEach((child) => {
-      render(child, $el);
+      renderRealDOM(child, $el);
     });
   }
   container.appendChild($el);
@@ -81,4 +92,38 @@ export function useState(initialState) {
   core.cursor++;
 
   return [state, setState];
+}
+
+function render(element, container) {
+  const { type, props, children } = element;
+
+  let $el;
+  // 함수형 컴포넌트 렌더링
+  if (typeof type === "function") {
+    const resultEl = type(props);
+    render(resultEl, container);
+    return;
+  }
+  if (type === "text") {
+    $el = document.createTextNode(props.value);
+  } else {
+    $el = document.createElement(type);
+    Object.entries(props).forEach(([key, value]) => {
+      // jsx 규칙상 class가 className으로 들어온다
+      if (key === "className") {
+        $el.setAttribute("class", value);
+        return;
+      }
+      if (key.startsWith("on") && typeof value === "function") {
+        const eventType = key.toLowerCase().slice(2);
+        $el.addEventListener(eventType, value);
+        return;
+      }
+      $el.setAttribute(key, value);
+    });
+    children.forEach((child) => {
+      render(child, $el);
+    });
+  }
+  container.appendChild($el);
 }
